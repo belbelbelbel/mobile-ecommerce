@@ -3,6 +3,7 @@ import { View, Text, FlatList, SafeAreaView, Image, StyleSheet, ImageBackground,
 import { products } from '@/constant/Content';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function CategoriesPage() {
   const [shuffledProducts, setShuffledProducts] = useState<any>([]);
@@ -22,24 +23,47 @@ export default function CategoriesPage() {
     return shuffledArray;
   };
 
-  const handleAddProducts = (id: string) => {
+  const handleAddProducts = async (id: string) => {
     const productToAdd = products.find((product) => product.id === id);
-    
     if (!productToAdd) {
       console.warn("Product not found!");
       return;
     }
-  
-    const isAlreadyInCart = cart.some((item:any) => item.id === id);
-  
+
+    const isAlreadyInCart = cart.some((item: any) => item.id === id);
     if (!isAlreadyInCart) {
-      setCart([...cart, productToAdd]);
-      console.log("Updated Cart:", [...cart, productToAdd]);
+      const updatedCart = [...cart, productToAdd];
+      setCart(updatedCart);
+
+      try {
+        await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
+        // console.log("Cart saved successfully:", updatedCart);
+      } catch (error) {
+        console.error("Error saving cart:", error);
+      }
     } else {
       alert("Product is already in the cart!");
     }
   };
-  
+
+
+  const handleLoaddata = async (key: string) => {
+    try {
+      const value = await AsyncStorage.getItem(key);
+      if (value !== null) {
+        setCart(JSON.parse(value));
+        // console.log("Loaded cart data:", JSON.parse(value));
+      } else {
+        console.log("Cart is empty");
+      }
+    } catch (error) {
+      console.log("Error loading cart:", error);
+    }
+  };
+
+  useEffect(() => {
+    handleLoaddata('cart');
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -49,14 +73,13 @@ export default function CategoriesPage() {
         </Pressable>
         <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Shop Now </Text>
         <Pressable style={{ padding: 10, backgroundColor: 'white', borderRadius: 10 }}>
-          <Ionicons name="cart" color={'black'} size={25} />
-          <Text className='absolute right-0 -top-5 text-2xl font-black text-red-700'>{cart.length}</Text>
+          <Ionicons name="cart" color={'black'} size={25} onPress={() => routes.push('/cart')} />
+          <Text className='absolute right-0 -top-5 text-xl font-black text-red-700'>{cart.length}</Text>
         </Pressable>
       </View>
       <FlatList
         data={products}
         numColumns={2}
-
         // contentContainerStyle={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}
         showsVerticalScrollIndicator={false}
         keyExtractor={(item, index) => index.toString()}
