@@ -24,28 +24,55 @@ export default function CategoriesPage() {
   };
 
   const handleAddProducts = async (id: string) => {
-    const productToAdd = products.find((product) => product.id === id);
-    if (!productToAdd) {
-      console.warn("Product not found!");
-      return;
-    }
-
-    const isAlreadyInCart = cart.some((item: any) => item.id === id);
-    if (!isAlreadyInCart) {
-      const updatedCart = [...cart, productToAdd];
-      setCart(updatedCart);
-
-      try {
-        await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
-        // console.log("Cart saved successfully:", updatedCart);
-      } catch (error) {
-        console.error("Error saving cart:", error);
+    try {
+      const productToAdd = products.find((product) => product.id === id);
+      if (!productToAdd) {
+        console.warn("Product not found!");
+        return;
       }
-    } else {
-      alert("Product is already in the cart!");
+  
+      const isAlreadyInCart = cart.some((item: any) => item.id === id);
+      if (!isAlreadyInCart) {
+        const updatedCart = [...cart, productToAdd];
+        setCart(updatedCart);
+  
+        // 🛠 Ensure state updates before saving to AsyncStorage
+        setTimeout(async () => {
+          try {
+            await AsyncStorage.setItem("cart", JSON.stringify(updatedCart));
+            const existingNotifications = await AsyncStorage.getItem("notify");
+            let notificationsArray = [];
+            if (existingNotifications) {
+              try {
+                notificationsArray = JSON.parse(existingNotifications);
+                if (!Array.isArray(notificationsArray)) {
+                  console.error("Invalid notification format, resetting...");
+                  notificationsArray = [];
+                }
+              } catch (parseError) {
+                console.error("Error parsing notifications:", parseError);
+                notificationsArray = [];
+              }
+            }
+            const newNotification = `Item ${productToAdd.name} added successfully!`;
+            notificationsArray.push(newNotification);
+  
+            await AsyncStorage.setItem("notify", JSON.stringify(notificationsArray));
+  
+            console.log("Cart & notification saved successfully!");
+          } catch (storageError) {
+            console.error("Error saving cart or notification:", storageError);
+          }
+        }, 100); 
+      } else {
+        alert("Product is already in the cart!");
+      }
+    } catch (error) {
+      console.error("Unexpected error in handleAddProducts:", error);
     }
   };
-
+  
+  
 
   const handleLoaddata = async (key: string) => {
     try {

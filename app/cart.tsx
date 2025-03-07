@@ -24,14 +24,58 @@ const cart = () => {
     };
 
 
+
     useEffect(() => {
         handleLoaddata('cart');
     }, []);
 
+    const handleRemoveProduct = async (id: string,name: string) => {
+        try {
+          const updatedCart = cart.filter((item: any) => item.id !== id);
+          setCart(updatedCart);
+      
+          setTimeout(async () => {
+            try {
+              await AsyncStorage.setItem("cart", JSON.stringify(updatedCart));
+              const existingNotifications = await AsyncStorage.getItem("notify");
+              let notificationsArray = [];
+              if (existingNotifications) {
+                try {
+                  notificationsArray = JSON.parse(existingNotifications);
+                  if (!Array.isArray(notificationsArray)) {
+                    console.error("Invalid notification format, resetting...");
+                    notificationsArray = [];
+                  }
+                } catch (parseError) {
+                  console.error("Error parsing notifications:", parseError);
+                  notificationsArray = [];
+                }
+              }
+      
+              // ✅ Add a new notification for item removal
+              const newNotification = `Item removed ${name} from cart.`;
+              notificationsArray.push(newNotification);
+      
+              await AsyncStorage.setItem("notify", JSON.stringify(notificationsArray));
+      
+              console.log("Item removed & notification saved successfully!");
+            } catch (storageError) {
+              console.error("Error saving cart or notification:", storageError);
+            }
+          }, 100);
+        } catch (error) {
+          console.error("Unexpected error in handleRemoveProduct:", error);
+        }
+      };
+      
+
+
+
+
 
     return (
         <SafeAreaView className='w-full h-full '>
-            <View className='' style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 20, paddingHorizontal: 9, alignItems: 'center',width: '90%',marginHorizontal:'auto' }}>
+            <View className='' style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 20, paddingHorizontal: 9, alignItems: 'center', width: '90%', marginHorizontal: 'auto' }}>
                 <Pressable onPress={() => route.back()} style={{ padding: 10, backgroundColor: 'white', borderRadius: 10 }}>
                     <Ionicons name="chevron-back" size={30} />
                 </Pressable>
@@ -48,7 +92,8 @@ const cart = () => {
                             <View>
                                 <Image source={product.image} className='w-[8rem] rounded-[0.5rem] h-[6rem]' />
                             </View>
-                            <Text className='font-bold text-[1.4rem] w-[60%] mx-auto'>{product.name}</Text>
+                            <Text className='font-bold text-[1.2rem] w-[45%] mx-auto'>{product.name}</Text>
+                            <Pressable onPress={() => handleRemoveProduct(product.id,product.name)} className='absolute top-3  right-5'><Text className='text-red-900'><Ionicons className='' color={''} name='close-circle' size={25} /></Text></Pressable>
                         </TouchableOpacity>
                     ))
                 ) : (

@@ -59,7 +59,7 @@ export default function Products() {
                                 <Text style={styles.logoText}>Leuze</Text>
                             </View>
                             <View style={styles.iconContainer}>
-                                <Ionicons name="notifications-circle-outline" size={35} color="black" />
+                                <Ionicons name="notifications-circle-outline" size={35} color="black" onPress={() => routes.push('/notification')}/>
                                 <Ionicons name="menu-outline" size={35} color="black" />
                             </View>
                         </View>

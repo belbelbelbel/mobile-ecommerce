@@ -39,12 +39,11 @@ useEffect(() => {
   );
 }
 
-
 const styles = StyleSheet.create({
   textcolor: {
     color: "white",
     textAlign: 'center',
-    fontSize: 23,
+    fontSize: 26,
     fontWeight: '800',
     marginBottom: 20,
     lineHeight: 35,
@@ -55,9 +54,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 'auto',
     opacity: 0.8,
     textAlign: 'center',
-    fontSize: 13,
+    fontSize: 18,
     fontWeight: '500',
-    lineHeight: 20,
+    lineHeight: 24,
   }
 
 })

@@ -10,6 +10,7 @@ export default function RootLayout() {
       <Stack.Screen name="ProductsDetails/[id]" options={{headerShown: false}}/>
       <Stack.Screen name="productscategories" options={{headerShown:false}}/>
       <Stack.Screen name="cart" options={{ headerShown: false }} />
+      <Stack.Screen name="notification" options={{ headerShown: false }} />
       {/* <Stack.Screen name="productsdetails" options={{ headerShown: false }} /> */}
       <Stack.Screen name="+not-found" />
     </Stack>
