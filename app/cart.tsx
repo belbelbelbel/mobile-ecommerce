@@ -58,7 +58,7 @@ const cart = () => {
       
               await AsyncStorage.setItem("notify", JSON.stringify(notificationsArray));
       
-              console.log("Item removed & notification saved successfully!");
+              // console.log("Item removed & notification saved successfully!");333
             } catch (storageError) {
               console.error("Error saving cart or notification:", storageError);
             }

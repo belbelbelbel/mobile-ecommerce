@@ -35,8 +35,6 @@ export default function CategoriesPage() {
       if (!isAlreadyInCart) {
         const updatedCart = [...cart, productToAdd];
         setCart(updatedCart);
-  
-        // 🛠 Ensure state updates before saving to AsyncStorage
         setTimeout(async () => {
           try {
             await AsyncStorage.setItem("cart", JSON.stringify(updatedCart));
@@ -59,7 +57,7 @@ export default function CategoriesPage() {
   
             await AsyncStorage.setItem("notify", JSON.stringify(notificationsArray));
   
-            console.log("Cart & notification saved successfully!");
+            // console.log("Cart & notification saved successfully!");
           } catch (storageError) {
             console.error("Error saving cart or notification:", storageError);
           }

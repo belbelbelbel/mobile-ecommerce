@@ -10,7 +10,7 @@ export default function LogoPart() {
                 <View style={{ display: 'flex', flexDirection: 'column', gap: 55, alignItems: 'center', width: '96%' }}>
                     <View style={{ display: 'flex', flexDirection: 'row', gap: 15, alignItems: 'center' }}>
                         <Image source={require('../assets/images/logo.png')} style={{ height: 45, width: 45 }} />
-                        <Text style={{ color: "white", fontSize: 50, fontFamily: "ClashDisplay-Bold", letterSpacing: 2 }}>
+                        <Text style={{ color: "white", fontSize: 60, fontFamily: "ClashDisplay-Bold", letterSpacing: 2 }}>
                             Leuze
                         </Text>
                     </View>

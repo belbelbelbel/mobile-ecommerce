@@ -1,4 +1,4 @@
-import { View, TextInput, StyleSheet } from 'react-native'
+import { View, TextInput, StyleSheet, Pressable } from 'react-native'
 import React, { useState } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 
@@ -10,9 +10,10 @@ type PropsTypes = {
     show?: boolean,
 }
 
-export default function InputComponent({ text, onChangeText, Placeholder, style, show }: PropsTypes) {
+export default function InputComponent({ text, onChangeText, Placeholder, style, show, }: PropsTypes) {
+    const [pressed, setPressed] = useState(false)
     return (
-        <View style={{ position: 'relative' }}>
+        <View style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent:'center', flexDirection:'row' }}>
             <TextInput
                 style={[styles.input, style]}
                 onChangeText={onChangeText}
@@ -22,9 +23,11 @@ export default function InputComponent({ text, onChangeText, Placeholder, style,
             />
             {
                 show && (
-                    <View style={{ position: 'absolute', right: 8, top: 12 }}>
-                        <Ionicons name='search' color={'white'} size={25}></Ionicons>
-                    </View>
+                    <Pressable style={{ position: 'absolute', right: 12 }} onPress={() => setPressed(!pressed)}>
+                        {
+                            pressed ? <Ionicons name='eye' color={'black'} size={25} ></Ionicons> : <Ionicons name='eye-off' color={'black'} size={25} ></Ionicons>
+                        }
+                    </Pressable>
                 )
             }
         </View>
@@ -34,8 +37,8 @@ export default function InputComponent({ text, onChangeText, Placeholder, style,
 // Default Input Styles
 const styles = StyleSheet.create({
     input: {
-        borderWidth: 1,
-        borderColor: 'white',
+        borderWidth: 0,
+        borderColor: 'black',
         color: 'white',
         padding: 10,
         borderRadius: 5,

@@ -32,7 +32,7 @@ useEffect(() => {
         <Text style={styles.textcolor}>We Provide The Best Electronic Products From Great Brands </Text>
         <Text style={styles.textcolor2}>You Will Be Able to Find A Wide Collecton Of Electronics From Top Brands</Text>
       </View>
-      <TouchableOpacity onPress={() => routes.navigate('/products')} style={{ backgroundColor: 'white', width: 60, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', bottom: 100, borderRadius: 10 }}>
+      <TouchableOpacity onPress={() => routes.navigate('/signin')} style={{ backgroundColor: 'white', width: 60, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', bottom: 100, borderRadius: 10 }}>
         <Ionicons name="arrow-forward-outline" style={{ color: 'black' }} size={30}  />
       </TouchableOpacity>
     </ImageBackground>
@@ -50,11 +50,11 @@ const styles = StyleSheet.create({
   },
   textcolor2: {
     color: "white",
-    width: '88%',
+    width: '80%',
     marginHorizontal: 'auto',
     opacity: 0.8,
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '500',
     lineHeight: 24,
   }

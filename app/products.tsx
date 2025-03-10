@@ -126,8 +126,10 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 20 },
         shadowOpacity: 0.1,
         shadowRadius: 6,
+        borderWidth: 1,
+        borderColor: '#ccc',
         elevation: 3,
-        borderColor: "#000",
+        // borderColor: "#000",
         marginVertical: 15
     },
 
