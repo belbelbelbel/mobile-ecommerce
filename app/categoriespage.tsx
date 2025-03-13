@@ -30,7 +30,7 @@ export default function CategoriesPage() {
         console.warn("Product not found!");
         return;
       }
-  
+
       const isAlreadyInCart = cart.some((item: any) => item.id === id);
       if (!isAlreadyInCart) {
         const updatedCart = [...cart, productToAdd];
@@ -54,14 +54,14 @@ export default function CategoriesPage() {
             }
             const newNotification = `Item ${productToAdd.name} added successfully!`;
             notificationsArray.push(newNotification);
-  
+
             await AsyncStorage.setItem("notify", JSON.stringify(notificationsArray));
-  
+
             // console.log("Cart & notification saved successfully!");
           } catch (storageError) {
             console.error("Error saving cart or notification:", storageError);
           }
-        }, 100); 
+        }, 100);
       } else {
         alert("Product is already in the cart!");
       }
@@ -69,8 +69,8 @@ export default function CategoriesPage() {
       console.error("Unexpected error in handleAddProducts:", error);
     }
   };
-  
-  
+
+
 
   const handleLoaddata = async (key: string) => {
     try {
@@ -88,7 +88,7 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     handleLoaddata('cart');
-  }, []);
+  }, [AsyncStorage.getItem('cart')]);
 
   return (
     <SafeAreaView style={styles.container}>

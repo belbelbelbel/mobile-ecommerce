@@ -59,8 +59,9 @@ export default function Products() {
       // return () => {
       //     AsyncStorage.removeItem("notify");
       // };
-    }, []);
+    }, [AsyncStorage.getItem("notify")]);
 
+    console.log(notifications.length)
   
     
 
@@ -80,7 +81,7 @@ export default function Products() {
                             </View>
                             <View style={styles.iconContainer}>
                                 <Ionicons name="notifications-circle-outline" size={35} color="black" onPress={() => routes.push('/notification')}/>
-                                {/* <Text className='text-black font-black'>{notifications.length}</Text> */}
+                                <Text className='text-black absolute -top-2 text-red-700 font-black'>{notifications.length}</Text>
                                 <Ionicons name="menu-outline" size={35} color="black" />
                             </View>
                         </View>
