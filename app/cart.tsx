@@ -69,10 +69,6 @@ const cart = () => {
       };
       
 
-
-
-
-
     return (
         <SafeAreaView className='w-full h-full '>
             <View className='' style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 20, paddingHorizontal: 9, alignItems: 'center', width: '90%', marginHorizontal: 'auto' }}>
@@ -89,11 +85,14 @@ const cart = () => {
                 {cart.length > 0 ? (
                     cart.map((product: any) => (
                         <TouchableOpacity onPress={() => route.push({ pathname: "/ProductsDetails/[id]", params: { id: product.id } })} key={product.id} className='w-[90%] rounded-[0.6rem] justify-between px-3 mx-auto h-[10rem] flex-row items-center  bg-white flex mb-5'>
+                           <Text className='font-bold  absolute bottom-2  -right-24 text-[1rem] w-[45%] mx-auto'>$~{product.price}</Text>
                             <View>
                                 <Image source={product.image} className='w-[8rem] rounded-[0.5rem] h-[6rem]' />
                             </View>
                             <Text className='font-bold text-[1.2rem] w-[45%] mx-auto'>{product.name}</Text>
+
                             <Pressable onPress={() => handleRemoveProduct(product.id,product.name)} className='absolute top-3  right-5'><Text className='text-red-900'><Ionicons className='' color={''} name='close-circle' size={25} /></Text></Pressable>
+
                         </TouchableOpacity>
                     ))
                 ) : (

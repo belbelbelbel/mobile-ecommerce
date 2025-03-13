@@ -30,6 +30,7 @@ const SignIn = () => {
             alert('Please fill in all the fields');
         }
     }
+    
     return (
         <ImageBackground
             source={require("../assets/images/bg-img.jpg")}

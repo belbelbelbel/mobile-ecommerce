@@ -1,5 +1,5 @@
 import { View, Text, SafeAreaView, Image, StyleSheet, ScrollView, TextInput } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import ImageContent from '@/components/ImageContent';
 import CategoriesContents from '@/components/CategoriesContents';
@@ -8,6 +8,7 @@ import { FlatList } from 'react-native';
 import { products } from '@/constant/Content';
 import { useRoute } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type item = {
     id: string;
@@ -41,6 +42,25 @@ export default function Products() {
         }
     };
 
+    const [notifications, setNotifications] = useState<string[]>([]);
+
+    useEffect(() => {
+      const loadNotifications = async () => {
+        try {
+          const value = await AsyncStorage.getItem("notify");
+          if (value !== null) {
+            setNotifications(JSON.parse(value));
+          }
+        } catch (error) {
+          console.error("Error loading notifications:", error);
+        }
+      };
+      loadNotifications();
+      // return () => {
+      //     AsyncStorage.removeItem("notify");
+      // };
+    }, []);
+
   
     
 
@@ -60,6 +80,7 @@ export default function Products() {
                             </View>
                             <View style={styles.iconContainer}>
                                 <Ionicons name="notifications-circle-outline" size={35} color="black" onPress={() => routes.push('/notification')}/>
+                                {/* <Text className='text-black font-black'>{notifications.length}</Text> */}
                                 <Ionicons name="menu-outline" size={35} color="black" />
                             </View>
                         </View>

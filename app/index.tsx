@@ -6,7 +6,6 @@ import iconSet from "@expo/vector-icons/build/FontAwesome5";
 import { EvilIcons, Ionicons } from "@expo/vector-icons";
 import { SplashScreen, useRouter } from "expo-router";
 import '../global.css'
-
 export default function Index() {
   const routes = useRouter()
   const [fontsLoaded] = useFonts({
