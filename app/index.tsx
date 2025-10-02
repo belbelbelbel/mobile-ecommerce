@@ -1,62 +1,52 @@
 import React, { useEffect } from "react";
-import { ImageBackground, Text, View, ActivityIndicator, Image, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  ImageBackground,
+  StatusBar,
+  ActivityIndicator,
+} from "react-native";
 import { useFonts } from "expo-font";
 import LogoPart from "@/components/LogoPart";
-import iconSet from "@expo/vector-icons/build/FontAwesome5";
-import { EvilIcons, Ionicons } from "@expo/vector-icons";
 import { SplashScreen, useRouter } from "expo-router";
-import '../global.css'
+import "../global.css";
+
 export default function Index() {
-  const routes = useRouter()
+  const router = useRouter();
   const [fontsLoaded] = useFonts({
     "ClashDisplay-Bold": require("../assets/fonts/ClashDisplay-Bold.ttf"),
   });
 
-useEffect(() => {
+  // Prevent splash screen from auto-hiding before fonts are loaded
+  useEffect(() => {
+    if (!fontsLoaded) {
+      SplashScreen.preventAutoHideAsync();
+    } else {
+      SplashScreen.hideAsync();
+
+      // ⏳ Navigate to OnboardingScreen after 2.5s
+      const timer = setTimeout(() => {
+        router.replace("/OnboardingScreen");
+      }, 2500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [fontsLoaded]);
+
   if (!fontsLoaded) {
-       <ActivityIndicator size="large" color="blue" />;
-  } else {
-    SplashScreen.hideAsync();
+    return <ActivityIndicator size="large" color="blue" />;
   }
-}, [fontsLoaded]);
 
   return (
     <ImageBackground
       source={require("../assets/images/bg-img.jpg")}
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'wh', gap: 40 }}
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
       resizeMode="cover"
     >
       <LogoPart />
-      <View style={{ position: 'relative', top: 30, width: '100%' }}>
-        <Text style={styles.textcolor}>We Provide The Best Electronic Products From Great Brands </Text>
-        <Text style={styles.textcolor2}>You Will Be Able to Find A Wide Collecton Of Electronics From Top Brands</Text>
-      </View>
-      <TouchableOpacity onPress={() => routes.navigate('/signin')} style={{ backgroundColor: 'white', width: 60, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', bottom: 100, borderRadius: 10 }}>
-        <Ionicons name="arrow-forward-outline" style={{ color: 'black' }} size={30}  />
-      </TouchableOpacity>
+      <StatusBar barStyle={"default"} />
     </ImageBackground>
   );
 }
-
-const styles = StyleSheet.create({
-  textcolor: {
-    color: "white",
-    textAlign: 'center',
-    fontSize: 26,
-    fontWeight: '800',
-    marginBottom: 20,
-    lineHeight: 35,
-  },
-  textcolor2: {
-    color: "white",
-    width: '80%',
-    marginHorizontal: 'auto',
-    opacity: 0.8,
-    textAlign: 'center',
-    fontSize: 14,
-    fontWeight: '500',
-    lineHeight: 24,
-  }
-
-})
-

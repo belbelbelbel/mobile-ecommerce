@@ -86,7 +86,7 @@ export default function Products() {
                             </View>
                         </View>
 
-                        <View style={styles.searchContainer}>
+                        {/* <View style={styles.searchContainer}>
                             <TextInput
                                 style={styles.searchInput}
                                 placeholder="Try search here.."
@@ -95,7 +95,7 @@ export default function Products() {
                                 onChangeText={setText}
                             />
                             <Ionicons name="search" size={20} color="#8c8c8c" style={styles.searchIcon} onPress={() => handleFilterInputs(text)} />
-                        </View>
+                        </View> */}
 
                         <ImageContent />
                         <CategoriesContents />

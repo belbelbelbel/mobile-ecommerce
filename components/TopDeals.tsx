@@ -24,19 +24,21 @@ export default function TopDeals() {
             </View>
             <View className="flex w-full flex-col gap-2">
               <View className='w-[75%] mx-auto'>
-                <Text style={{ color: 'white', fontWeight: '700', fontSize: 12 }}>
+                <Text style={{ color: 'black', fontWeight: '700', fontSize: 12 }}>
                   {item.price} <Text className="text-green-400">$</Text>
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => router.push({ pathname: "/ProductsDetails/[id]", params: { id: item.id } })}
-                className="items-center h-[2.2rem] rounded-[6px] flex justify-center bg-white mx-auto w-[78%]"
+                className="items-center h-[2.2rem] rounded-[6px] flex justify-center bg-black mx-auto w-[78%]"
               >
-                <Text className="text-black font-bold">Order</Text>
+                <Text className="text-white font-bold">Order</Text>
               </TouchableOpacity>
             </View>
-            <Text style={{ color: 'white', fontSize: 14, marginTop: 5, position: 'absolute', top: 7, left: 16, fontWeight: '700' }}>
-              {item.rating} <Ionicons name='star'/>
+            <Text style={{backgroundColor: 'black',  fontSize: 14, marginTop: 5, position: 'absolute', top: 7, left: 16, fontWeight: '700', width: 50, height:25, color: 'white', padding: 1,  borderRadius: 4, display:'flex', justifyContent: "center", alignItems:'center' }}>
+              <Text>
+                {item.rating} <Ionicons name='star' color={'white'}/>
+              </Text>
             </Text>
           </View>
         )}
@@ -68,16 +70,21 @@ const styles = StyleSheet.create({
     gap: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'black',
-    shadowColor: 'black',
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 5,
   },
+
   productImage: {
     width: 90,
     height: 90,
     borderRadius: 30,
   },
   productDescription: {
-    color: 'white',
+    color: 'black',
     fontWeight: '700',
     marginTop: 10,
   },

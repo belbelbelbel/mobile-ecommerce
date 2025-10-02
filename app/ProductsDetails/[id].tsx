@@ -1,17 +1,43 @@
 import { View, Text, Image, SafeAreaView, Pressable } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { products } from "@/constant/Content";
+// import { products } from "@/constant/Content";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAllProducts } from "@/services/products";
+
+export interface Product {
+    id?: string;
+    name: string;
+    category: string;
+    price: number;
+    description: string;
+    imageUrl: string;
+    rating: number;
+    inStock: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 
 export default function ProductDetails() {
     const [count, setCount] = useState(0);
+    const [products, setProducts] = useState<Product[]>([]);
     const [cart, setCart] = useState<any>([])
     const { id } = useLocalSearchParams();
+    const routes = useRouter()
+    console.log(id)
 
     const route = useRouter();
-    const product = products.find((item) => item.id.toString() === id);
+     const getParameters = async() => {
+            const fetchedProducts = await getAllProducts();
+            setProducts(fetchedProducts)
+        }
+    useEffect(() => {
+        getParameters()
+    }, [])
+    const product = products.find((item) => item.name.toString() === id);
+    console.log(products)
     const handleLoaddata = async (key: string) => {
         try {
             const value = await AsyncStorage.getItem(key);
@@ -31,33 +57,33 @@ export default function ProductDetails() {
     }, []);
 
     const handleAddProducts = async (id: string) => {
-        const productToAdd = products.find((product) => product.id === id);
+        const productToAdd = products.find((product) => product.name === id);
         if (!productToAdd) {
-          console.warn("Product not found!");
-          return;
+            console.warn("Product not found!");
+            return;
         }
-    
+
         const isAlreadyInCart = cart.some((item: any) => item.id === id);
         if (!isAlreadyInCart) {
-          const updatedCart = [...cart, productToAdd];
-          setCart(updatedCart);
-    
-          try {
-            await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
-            // console.log("Cart saved successfully:", updatedCart);
-          } catch (error) {
-            console.error("Error saving cart:", error);
-          }
+            const updatedCart = [...cart, productToAdd];
+            setCart(updatedCart);
+
+            try {
+                await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
+                // console.log("Cart saved successfully:", updatedCart);
+            } catch (error) {
+                console.error("Error saving cart:", error);
+            }
         } else {
-          alert("Product is already in the cart!");
+            alert("Product is already in the cart!");
         }
-      };
-    
+    };
+
 
     if (!product) {
         return (
             <View className="flex-1 items-center justify-center">
-                <Text className="text-xl font-bold text-red-600">Product Not Found</Text>
+                <Text className="text-xl font-bold text-red-600" onPress={() => routes.back()}>Product Not Found</Text>
             </View>
         );
     }
@@ -74,7 +100,7 @@ export default function ProductDetails() {
                         <Text className='absolute right-0 -top-4 text-2xl font-black text-red-700'>{cart.length}</Text>
                     </Pressable>
                 </View>
-                <Image source={product.image} className="w-64 h-64 rounded-full" />
+                <Image source={{uri: product.imageUrl}} className="w-64 h-64 rounded-full" />
             </View>
 
             {/* Product Info Section */}
@@ -106,7 +132,7 @@ export default function ProductDetails() {
             <View className="w-full absolute bottom-12">
                 <Pressable
                     className="w-[80%] mx-auto rounded-[1.5rem] h-16 bg-black text-white font-bold items-center justify-center "
-                    onPress={() => handleAddProducts(product.id)}
+                    onPress={() => handleAddProducts(product.name)}
                 >
                     <Text className="text-white font-bold">Add to Cart</Text>
                 </Pressable>
