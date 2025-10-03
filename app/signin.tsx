@@ -57,6 +57,7 @@ const SignIn = () => {
         try {
             setLoading(true);
             await signUpWithEmailAndPassword(email, password, displayName);
+            
             Alert.alert('Success', 'Account created successfully!', [
                 { text: 'OK', onPress: () => routes.replace('/(tabs)') }
             ]);

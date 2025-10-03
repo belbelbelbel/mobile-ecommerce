@@ -96,11 +96,11 @@ export default function ProductDetails() {
                         <Ionicons name="chevron-back" size={30} />
                     </Pressable>
                     <Pressable className="w-12 h-12 bg-white justify-center items-center rounded-2xl">
-                        <Ionicons name="cart" color={'black'} size={25} onPress={() => route.push('/cart')} />
+                        <Ionicons name="cart" color={'black'} size={25} onPress={() => route.push('/(tabs)/cart')} />
                         <Text className='absolute right-0 -top-4 text-2xl font-black text-red-700'>{cart.length}</Text>
                     </Pressable>
                 </View>
-                <Image source={{uri: product.imageUrl}} className="w-64 h-64 rounded-full" />
+                <Image source={{uri: product.imageUrl}} className="w-72 h-72 rounded-full" />
             </View>
 
             {/* Product Info Section */}

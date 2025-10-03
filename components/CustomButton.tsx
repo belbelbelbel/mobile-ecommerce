@@ -92,7 +92,7 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
       }}>
       <Animated.View
         style={[styles.container, buttonAnimationStyle, animatedColor]}>
-        <Animated.Text style={[styles.textButton, textAnimationStyle]} onPress={() =>  routes.push('/(tabs)')}>
+        <Animated.Text style={[styles.textButton, textAnimationStyle]} onPress={() =>  routes.push('/signin')}>
           Get Started
         </Animated.Text>
         <Animated.Image

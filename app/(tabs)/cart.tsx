@@ -1,71 +1,119 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  SafeAreaView,
-  StatusBar,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, Pressable, ScrollView, TouchableOpacity } from 'react-native'
+import React, { useEffect, useState } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { Image } from 'react-native'
 
-export default function CartPage() {
+const cart = () => {
+  const [cart, setCart] = useState([])
+  const [totalPrice, setTotalPrice] = useState(0);
+  const route = useRouter()
+  const handleLoaddata = async (key: string) => {
+    try {
+      const value = await AsyncStorage.getItem(key);
+      if (value !== null) {
+        setCart(JSON.parse(value));
+        // console.log("Loaded cart data:", JSON.parse(value));
+      } else {
+        console.log("Cart is empty");
+      }
+    } catch (error) {
+      console.log("Error loading cart:", error);
+    }
+  };
+
+  useEffect(() => {
+    handleLoaddata('cart');
+  }, []);
+
+  useEffect(() => {
+    const total = cart.reduce((sum, item:any) => sum + (item.price || 0), 0);
+    setTotalPrice(total);
+  }, [cart]);
+
+
+
+
+  useEffect(() => {
+    handleLoaddata('cart');
+  }, []);
+
+  const handleRemoveProduct = async (id: string, name: string) => {
+    try {
+      const updatedCart = cart.filter((item: any) => item.id !== id);
+      setCart(updatedCart);
+
+      setTimeout(async () => {
+        try {
+          await AsyncStorage.setItem("cart", JSON.stringify(updatedCart));
+          const existingNotifications = await AsyncStorage.getItem("notify");
+          let notificationsArray = [];
+          if (existingNotifications) {
+            try {
+              notificationsArray = JSON.parse(existingNotifications);
+              if (!Array.isArray(notificationsArray)) {
+                console.error("Invalid notification format, resetting...");
+                notificationsArray = [];
+              }
+            } catch (parseError) {
+              console.error("Error parsing notifications:", parseError);
+              notificationsArray = [];
+            }
+          }
+          const newNotification = `Item removed ${name} from cart.`;
+          notificationsArray.push(newNotification);
+
+          await AsyncStorage.setItem("notify", JSON.stringify(notificationsArray));
+
+          // console.log("Item removed & notification saved successfully!");333
+        } catch (storageError) {
+          console.error("Error saving cart or notification:", storageError);
+        }
+      }, 100);
+    } catch (error) {
+      console.error("Unexpected error in handleRemoveProduct:", error);
+    }
+  };
+
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      
-      {/* Header */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 20,
-          paddingVertical: 16,
-          backgroundColor: '#f8f9fa',
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 24,
-            fontWeight: 'bold',
-            color: '#000',
-          }}
-        >
-          Shopping Cart
-        </Text>
+    <SafeAreaView className='w-full h-full '>
+      <View className='' style={{ flexDirection: 'row', justifyContent: 'space-between', marginVertical: 20, paddingHorizontal: 9, alignItems: 'center', width: '90%', marginHorizontal: 'auto' }}>
+        {/* <Pressable onPress={() => route.back()} style={{ padding: 10, backgroundColor: 'white', borderRadius: 10 }}>
+          <Ionicons name="chevron-back" size={30} />
+        </Pressable> */}
+        <Text style={{ fontSize: 24, fontWeight: 'bold' }}>Shopping Cart </Text>
+        <Pressable style={{ padding: 10, backgroundColor: 'white', borderRadius: 10 }}>
+          <Ionicons name="cart" color={'black'} size={25} />
+          <Text className='absolute right-0 -top-5 text-xl font-black text-red-700'>{cart.length}</Text>
+        </Pressable>
       </View>
+      <ScrollView className='w-full' >
+        {cart.length > 0 ? (
+          cart.map((product: any) => (
+            <TouchableOpacity onPress={() => route.push({ pathname: "/ProductsDetails/[id]", params: { id: product.name } })} key={product.id} className='w-[90%] rounded-[0.6rem] justify-between px-3 mx-auto h-[10rem] flex-row items-center  bg-white flex mb-5'>
+              <Text className='font-bold  absolute bottom-2  -right-24 text-[1rem] w-[45%] mx-auto'>$~{product.price}</Text>
+              <View>
+                <Image source={{uri:product.imageUrl}} className='w-[8rem] rounded-[0.5rem] h-[6rem]' />
+              </View>
+              <Text className='font-bold text-[1.2rem] w-[45%] mx-auto'>{product.name}</Text>
 
-      {/* Empty Cart State */}
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          paddingHorizontal: 40,
-        }}
-      >
-        <Ionicons name="bag-outline" size={80} color="#ccc" />
-        <Text
-          style={{
-            fontSize: 18,
-            fontWeight: 'bold',
-            color: '#666',
-            marginTop: 20,
-            textAlign: 'center',
-          }}
-        >
-          Your cart is empty
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            color: '#999',
-            marginTop: 8,
-            textAlign: 'center',
-            lineHeight: 20,
-          }}
-        >
-          Add some items to your cart to see them here
-        </Text>
-      </View>
+              <Pressable onPress={() => handleRemoveProduct(product.id, product.name)} className='absolute top-3  right-5'><Text className='text-red-900'><Ionicons className='' color={''} name='close-circle' size={25} /></Text></Pressable>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text style={{ fontSize: 15, textAlign: "center", marginTop: 20 }}>Add some item to your cart to see them here</Text>
+        )}
+
+        <View className="w-[90%] mx-auto bg-white p-4 rounded-lg mt-5">
+          <Text className="text-xl font-bold text-center">Total: ${totalPrice.toFixed(2)}</Text>
+        </View>
+        
+      </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
+
+export default cart

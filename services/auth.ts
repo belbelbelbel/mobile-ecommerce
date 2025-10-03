@@ -1,3 +1,4 @@
+import { auth, firestore } from '@/config/firebase';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -7,7 +8,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { auth, firestore } from '../config/firebase';
+
 
 export interface UserProfile {
   uid: string;
@@ -16,6 +17,8 @@ export interface UserProfile {
   photoURL?: string;
   createdAt: Date;
 }
+// console.log("Firebase initialized:", app.name); 
+
 
 // Sign up with email and password
 export const signUpWithEmailAndPassword = async (
@@ -31,13 +34,14 @@ export const signUpWithEmailAndPassword = async (
     await updateProfile(user, {
       displayName: displayName
     });
+    // console.log("Auth instance:", auth);
 
     // Save user profile to Firestore
     const userProfile: UserProfile = {
       uid: user.uid,
       email: user.email!,
       displayName: displayName,
-      photoURL: user.photoURL || undefined,
+      // photoURL: user.photoURL || undefined,
       createdAt: new Date()
     };
 

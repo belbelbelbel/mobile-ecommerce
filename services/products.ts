@@ -151,7 +151,7 @@ export const addProduct = async (productData: Omit<Product, 'id' | 'createdAt' |
   }
 };
 
-// Update a product (admin function)
+
 export const updateProduct = async (productId: string, updates: Partial<Product>): Promise<void> => {
   try {
     const docRef = doc(firestore, PRODUCTS_COLLECTION, productId);
@@ -165,7 +165,7 @@ export const updateProduct = async (productId: string, updates: Partial<Product>
   }
 };
 
-// Delete a product (admin function)
+
 export const deleteProduct = async (productId: string): Promise<void> => {
   try {
     const docRef = doc(firestore, PRODUCTS_COLLECTION, productId);
@@ -183,7 +183,7 @@ export const initializeSampleProducts = async (): Promise<void> => {
       {
         name: 'Modern Light Clothes',
         category: 'T-Shirt',
-        price: 212.99,
+        price: 50.99,
         rating: 5.0,
         imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400',
         description: 'A modern and comfortable light t-shirt perfect for everyday wear.',
