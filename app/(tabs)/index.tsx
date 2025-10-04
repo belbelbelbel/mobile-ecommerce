@@ -23,6 +23,7 @@ import {
   Product
 } from '../../services/products';
 import { useAuth } from '../../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const categories = ['All Items', 'Dress', 'T-Shirt', 'Pants'];
 
@@ -40,6 +41,20 @@ export default function HomePage() {
    const [refreshing, setRefreshing] = useState(false);
   const { user, userProfile } = useAuth();
 
+  // Load favorites from AsyncStorage
+  const loadFavorites = async (): Promise<Set<string>> => {
+    try {
+      const favoritesData = await AsyncStorage.getItem('favorites');
+      if (favoritesData) {
+        const favoritesArray: string[] = JSON.parse(favoritesData);
+        return new Set(favoritesArray);
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+    return new Set<string>();
+  };
+
   // Load products from Firebase
   useEffect(() => {
     loadProducts();
@@ -48,11 +63,15 @@ export default function HomePage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
+      // Load favorites first
+      const loadedFavorites = await loadFavorites();
+      setFavorites(loadedFavorites);
+      
       // await initializeSampleProducts();
       const fetchedProducts = await getAllProducts();
       const productsWithFavorites = fetchedProducts.map(product => ({
         ...product,
-        isFavorite: favorites.has(product.id || ''),
+        isFavorite: loadedFavorites.has(product.id || ''),
       }));
 
       setProducts(productsWithFavorites);
@@ -107,24 +126,32 @@ export default function HomePage() {
     }
   };
 
-  const toggleFavorite = (productId: string) => {
-    setFavorites(prevFavorites => {
-      const newFavorites = new Set(prevFavorites);
+  const toggleFavorite = async (productId: string) => {
+    try {
+      const newFavorites = new Set(favorites);
       if (newFavorites.has(productId)) {
         newFavorites.delete(productId);
       } else {
         newFavorites.add(productId);
       }
-      return newFavorites;
-    });
-
-    setProducts(prevProducts =>
-      prevProducts.map(product =>
-        product.id === productId
-          ? { ...product, isFavorite: !product.isFavorite }
-          : product
-      )
-    );
+      
+      // Update state
+      setFavorites(newFavorites);
+      
+      // Save to AsyncStorage
+      await AsyncStorage.setItem('favorites', JSON.stringify(Array.from(newFavorites)));
+      
+      // Update products
+      setProducts(prevProducts =>
+        prevProducts.map(product =>
+          product.id === productId
+            ? { ...product, isFavorite: !product.isFavorite }
+            : product
+        )
+      );
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
   };
 
   const renderProductItem = ({ item }: { item: ProductWithFavorite }) => (
