@@ -55,7 +55,7 @@ export default function HomePage() {
     return new Set<string>();
   };
 
-  // Load products from Firebase
+
   useEffect(() => {
     loadProducts();
   }, []);
@@ -63,11 +63,8 @@ export default function HomePage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      // Load favorites first
       const loadedFavorites = await loadFavorites();
       setFavorites(loadedFavorites);
-      
-      // await initializeSampleProducts();
       const fetchedProducts = await getAllProducts();
       const productsWithFavorites = fetchedProducts.map(product => ({
         ...product,
