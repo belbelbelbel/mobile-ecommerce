@@ -23,7 +23,9 @@ import {
   Product
 } from '../../services/products';
 import { useAuth } from '../../contexts/AuthContext';
+import { useCart } from '../../contexts/CartContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ProductGridSkeleton } from '../../components/SkeletonLoader';
 
 const categories = ['All Items', 'Dress', 'T-Shirt', 'Pants'];
 
@@ -38,8 +40,10 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const router = useRouter();
-   const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const { user, userProfile } = useAuth();
+  const { addToCart, cartCount } = useCart();
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
 
   // Load favorites from AsyncStorage
   const loadFavorites = async (): Promise<Set<string>> => {
@@ -151,6 +155,18 @@ export default function HomePage() {
     }
   };
 
+  const handleAddToCart = async (product: ProductWithFavorite) => {
+    try {
+      setAddingToCart(product.id || '');
+      await addToCart(product);
+      Alert.alert('Success', `${product.name} added to cart!`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to add item to cart. Please try again.');
+    } finally {
+      setAddingToCart(null);
+    }
+  };
+
   const renderProductItem = ({ item }: { item: ProductWithFavorite }) => (
     <TouchableOpacity
       style={{
@@ -168,6 +184,54 @@ export default function HomePage() {
       onPress={() => router.push({ pathname: "/ProductsDetails/[id]", params: { id: item.name || 'cargo pants' } })}
     >
       <View style={{ position: 'relative' }}>
+        {/* Rating - Top Left */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            borderRadius: 12,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            flexDirection: 'row',
+            alignItems: 'center',
+            zIndex: 1,
+          }}
+        >
+          <Ionicons name="star" size={12} color="#FFD700" />
+          <Text
+            style={{
+              fontSize: 11,
+              color: '#fff',
+              marginLeft: 2,
+              fontWeight: '600',
+            }}
+          >
+            {item.rating}
+          </Text>
+        </View>
+
+        {/* Favorite Button - Top Right */}
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: 16,
+            padding: 6,
+            zIndex: 1,
+          }}
+          onPress={() => toggleFavorite(item.id || '')}
+        >
+          <Ionicons
+            name={item.isFavorite ? 'heart' : 'heart-outline'}
+            size={18}
+            color={item.isFavorite ? '#ff4444' : '#666'}
+          />
+        </TouchableOpacity>
+
         <Image
           source={{ uri: item.imageUrl }}
           style={{
@@ -178,31 +242,16 @@ export default function HomePage() {
           }}
           resizeMode="cover"
         />
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            borderRadius: 16,
-            padding: 6,
-          }}
-          onPress={() => toggleFavorite(item.id || '')}
-        >
-          <Ionicons
-            name={item.isFavorite ? 'heart' : 'heart-outline'}
-            size={18}
-            color={item.isFavorite ? '#ff4444' : '#666'}
-          />
-        </TouchableOpacity>
       </View>
 
+      {/* Product Info */}
       <Text
         style={{
           fontSize: 14,
           fontWeight: 'bold',
           color: '#000',
           marginBottom: 4,
+          lineHeight: 18,
         }}
         numberOfLines={2}
       >
@@ -219,7 +268,8 @@ export default function HomePage() {
         {item.category}
       </Text>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Price Row */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text
           style={{
             fontSize: 16,
@@ -229,20 +279,28 @@ export default function HomePage() {
         >
           ${item.price}
         </Text>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="star" size={14} color="#FFD700" />
-          <Text
-            style={{
-              fontSize: 12,
-              color: '#666',
-              marginLeft: 2,
-            }}
-          >
-            {item.rating}
-          </Text>
-        </View>
       </View>
+      
+      {/* Add to Cart Button - Full Width */}
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#000',
+          borderRadius: 12,
+          paddingVertical: 10,
+          alignItems: 'center',
+          opacity: addingToCart === item.id ? 0.6 : 1,
+        }}
+        onPress={() => handleAddToCart(item)}
+        disabled={addingToCart === item.id}
+      >
+        {addingToCart === item.id ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>
+            Add to Cart
+          </Text>
+        )}
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -410,10 +468,7 @@ export default function HomePage() {
           }}
         >
           {loading ? (
-            <View style={{ padding: 40, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color="#000" />
-              <Text style={{ marginTop: 16, color: '#666' }}>Loading products..</Text>
-            </View>
+            <ProductGridSkeleton />
           ) : (
             <FlatList
               data={products}

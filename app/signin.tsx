@@ -37,6 +37,7 @@ const SignIn = () => {
             setForm({ email: '', password: '', displayName: '' });
         } catch (error: any) {
             Alert.alert('Sign In Error', error.message);
+             console.log('Sign Up Error', error.message);
         } finally {
             setLoading(false);
         }
@@ -64,6 +65,7 @@ const SignIn = () => {
             setForm({ email: '', password: '', displayName: '' });
         } catch (error: any) {
             Alert.alert('Sign Up Error', error.message);
+            console.log('Sign Up Error', error.message);
         } finally {
             setLoading(false);
         }

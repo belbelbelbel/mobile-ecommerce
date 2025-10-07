@@ -13,7 +13,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { getAllProducts, Product } from '../../services/products';
+import { useCart } from '../../contexts/CartContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ProductGridSkeleton } from '../../components/SkeletonLoader';
 
 interface ProductWithFavorite extends Product {
   isFavorite: boolean;
@@ -24,7 +26,9 @@ export default function FavoritesPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const router = useRouter();
+  const { addToCart } = useCart();
 
   // Load favorites from AsyncStorage
   const loadFavorites = async () => {
@@ -80,6 +84,17 @@ export default function FavoritesPage() {
     }
   };
 
+  const handleAddToCart = async (product: ProductWithFavorite) => {
+    try {
+      setAddingToCart(product.id || '');
+      await addToCart(product);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setAddingToCart(null);
+    }
+  };
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadFavoriteProducts();
@@ -110,6 +125,50 @@ export default function FavoritesPage() {
       onPress={() => router.push({ pathname: "/ProductsDetails/[id]", params: { id: item.name || '' } })}
     >
       <View style={{ position: 'relative' }}>
+        {/* Rating - Top Left */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 8,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            borderRadius: 12,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            flexDirection: 'row',
+            alignItems: 'center',
+            zIndex: 1,
+          }}
+        >
+          <Ionicons name="star" size={12} color="#FFD700" />
+          <Text
+            style={{
+              fontSize: 11,
+              color: '#fff',
+              marginLeft: 2,
+              fontWeight: '600',
+            }}
+          >
+            {item.rating}
+          </Text>
+        </View>
+
+        {/* Remove Favorite Button - Top Right */}
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: 16,
+            padding: 6,
+            zIndex: 1,
+          }}
+          onPress={() => removeFavorite(item.id || '')}
+        >
+          <Ionicons name="heart" size={18} color="#ff4444" />
+        </TouchableOpacity>
+
         <Image
           source={{ uri: item.imageUrl }}
           style={{
@@ -120,27 +179,16 @@ export default function FavoritesPage() {
           }}
           resizeMode="cover"
         />
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            borderRadius: 16,
-            padding: 6,
-          }}
-          onPress={() => removeFavorite(item.id || '')}
-        >
-          <Ionicons name="heart" size={18} color="#ff4444" />
-        </TouchableOpacity>
       </View>
 
+      {/* Product Info */}
       <Text
         style={{
           fontSize: 14,
           fontWeight: 'bold',
           color: '#000',
           marginBottom: 4,
+          lineHeight: 18,
         }}
         numberOfLines={2}
       >
@@ -157,7 +205,8 @@ export default function FavoritesPage() {
         {item.category}
       </Text>
 
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Price */}
+      <View style={{ marginBottom: 12 }}>
         <Text
           style={{
             fontSize: 16,
@@ -167,20 +216,28 @@ export default function FavoritesPage() {
         >
           ${item.price}
         </Text>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="star" size={14} color="#FFD700" />
-          <Text
-            style={{
-              fontSize: 12,
-              color: '#666',
-              marginLeft: 2,
-            }}
-          >
-            {item.rating}
-          </Text>
-        </View>
       </View>
+
+      {/* Add to Cart Button */}
+      <TouchableOpacity
+        style={{
+          backgroundColor: '#000',
+          borderRadius: 12,
+          paddingVertical: 10,
+          alignItems: 'center',
+          opacity: addingToCart === item.id ? 0.6 : 1,
+        }}
+        onPress={() => handleAddToCart(item)}
+        disabled={addingToCart === item.id}
+      >
+        {addingToCart === item.id ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>
+            Add to Cart
+          </Text>
+        )}
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -222,10 +279,7 @@ export default function FavoritesPage() {
 
       {/* Content */}
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#000" />
-          <Text style={{ marginTop: 16, color: '#666' }}>Loading favorites...</Text>
-        </View>
+        <ProductGridSkeleton />
       ) : favoriteProducts.length === 0 ? (
         <View
           style={{
@@ -258,6 +312,20 @@ export default function FavoritesPage() {
           >
             Tap the heart icon on items you love to save them here
           </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#000',
+              borderRadius: 20,
+              paddingHorizontal: 24,
+              paddingVertical: 12,
+              marginTop: 20,
+            }}
+            onPress={() => router.push('/(tabs)')}
+          >
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>
+              Start Shopping
+            </Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
