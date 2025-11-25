@@ -1,8 +1,7 @@
-import { View, Text, Image, SafeAreaView, Pressable } from "react-native";
+import { View, Text, Image, SafeAreaView, Pressable, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-// import { products } from "@/constant/Content";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAllProducts } from "@/services/products";
 
@@ -26,18 +25,33 @@ export default function ProductDetails() {
     const [cart, setCart] = useState<any>([])
     const { id } = useLocalSearchParams();
     const routes = useRouter()
-    console.log(id)
+    const resolvedId = useMemo(() => (Array.isArray(id) ? id[0] : id), [id]);
+    const [loadingProduct, setLoadingProduct] = useState(true);
 
     const route = useRouter();
-     const getParameters = async() => {
+    const getParameters = async() => {
+        try {
+            setLoadingProduct(true);
             const fetchedProducts = await getAllProducts();
             setProducts(fetchedProducts)
+        } catch (error) {
+            console.log("Error loading product:", error);
+        } finally {
+            setLoadingProduct(false);
         }
+    }
     useEffect(() => {
         getParameters()
     }, [])
-    const product = products.find((item) => item.name.toString() === id);
-    console.log(products)
+    const product = useMemo(
+        () =>
+            products.find(
+                (item) =>
+                    (resolvedId && item.id === resolvedId) ||
+                    item.name.toString() === resolvedId
+            ),
+        [products, resolvedId]
+    );
     const handleLoaddata = async (key: string) => {
         try {
             const value = await AsyncStorage.getItem(key);
@@ -57,7 +71,9 @@ export default function ProductDetails() {
     }, []);
 
     const handleAddProducts = async (id: string) => {
-        const productToAdd = products.find((product) => product.name === id);
+        const productToAdd = products.find(
+            (product) => product.id === id || product.name === id
+        );
         if (!productToAdd) {
             console.warn("Product not found!");
             return;
@@ -80,11 +96,31 @@ export default function ProductDetails() {
     };
 
 
+    if (loadingProduct) {
+        return (
+            <SafeAreaView className="flex-1 items-center justify-center bg-white">
+                <ActivityIndicator size="large" color="#111" />
+                <Ionicons name="shirt-outline" size={36} color="#d1d5db" style={{ marginTop: 24 }} />
+                <Text className="mt-3 text-base text-gray-500">Loading product...</Text>
+            </SafeAreaView>
+        );
+    }
+
     if (!product) {
         return (
-            <View className="flex-1 items-center justify-center">
-                <Text className="text-xl font-bold text-red-600" onPress={() => routes.back()}>Product Not Found</Text>
-            </View>
+            <SafeAreaView className="flex-1 items-center justify-center bg-white px-8">
+                <Ionicons name="alert-circle-outline" size={48} color="#f97316" />
+                <Text className="mt-4 text-xl font-semibold text-gray-900">Product not found</Text>
+                <Text className="mt-2 text-center text-base text-gray-500">
+                    We couldn't load this item. Please go back and try again.
+                </Text>
+                <Pressable
+                    className="mt-8 px-6 py-3 rounded-2xl bg-black"
+                    onPress={() => routes.back()}
+                >
+                    <Text className="text-white font-semibold">Back to shopping</Text>
+                </Pressable>
+            </SafeAreaView>
         );
     }
 
@@ -132,7 +168,7 @@ export default function ProductDetails() {
             <View className="w-full absolute bottom-12">
                 <Pressable
                     className="w-[80%] mx-auto rounded-[1.5rem] h-16 bg-black text-white font-bold items-center justify-center "
-                    onPress={() => handleAddProducts(product.name)}
+                    onPress={() => handleAddProducts(product.id || product.name)}
                 >
                     <Text className="text-white font-bold">Add to Cart</Text>
                 </Pressable>

@@ -7,12 +7,13 @@ import {
   TouchableOpacity,
   StatusBar,
   Linking,
-  Alert,
   TextInput,
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useToast } from '../contexts/ToastContext';
+import { layout, spacing, surfaces, colors } from '@/styles/theme';
 
 interface FAQItem {
   id: string;
@@ -23,6 +24,7 @@ interface FAQItem {
 
 const HelpSupportScreen = () => {
   const router = useRouter();
+  const { showToast } = useToast();
   const [showContactModal, setShowContactModal] = useState(false);
   const [contactForm, setContactForm] = useState({
     name: '',
@@ -79,24 +81,14 @@ const HelpSupportScreen = () => {
 
   const handleContactSubmit = () => {
     if (!contactForm.name || !contactForm.email || !contactForm.subject || !contactForm.message) {
-      Alert.alert('Error', 'Please fill in all fields');
+      showToast('Please fill in all fields.', 'error');
       return;
     }
 
     // In a real app, you would send this to your backend
-    Alert.alert(
-      'Message Sent',
-      'Thank you for contacting us! We\'ll get back to you within 24 hours.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            setContactForm({ name: '', email: '', subject: '', message: '' });
-            setShowContactModal(false);
-          }
-        }
-      ]
-    );
+    showToast("Message sent! We'll get back to you within 24 hours.", 'success');
+    setContactForm({ name: '', email: '', subject: '', message: '' });
+    setShowContactModal(false);
   };
 
   const handlePhoneCall = () => {
@@ -108,7 +100,7 @@ const HelpSupportScreen = () => {
   };
 
   const handleLiveChat = () => {
-    Alert.alert('Live Chat', 'Live chat will be available soon! For now, please use email or phone support.');
+    showToast('Live chat will be available soon. Use email or phone support meantime.', 'info');
   };
 
   const renderContactModal = () => (
@@ -131,11 +123,11 @@ const HelpSupportScreen = () => {
           }}
         >
           <TouchableOpacity onPress={() => setShowContactModal(false)}>
-            <Text style={{ fontSize: 16, color: '#007bff' }}>Cancel</Text>
+            <Text style={{ fontSize: 16, color: '#111' }}>Cancel</Text>
           </TouchableOpacity>
           <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Contact Us</Text>
           <TouchableOpacity onPress={handleContactSubmit}>
-            <Text style={{ fontSize: 16, color: '#007bff', fontWeight: '600' }}>Send</Text>
+            <Text style={{ fontSize: 16, color: '#111', fontWeight: '600' }}>Send</Text>
           </TouchableOpacity>
         </View>
 
@@ -219,7 +211,7 @@ const HelpSupportScreen = () => {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={layout.screenContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       
       {/* Header */}
@@ -227,9 +219,8 @@ const HelpSupportScreen = () => {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: 20,
+          paddingHorizontal: spacing.screenPadding,
           paddingVertical: 16,
-          backgroundColor: '#f8f9fa',
         }}
       >
         <TouchableOpacity
@@ -242,11 +233,8 @@ const HelpSupportScreen = () => {
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: 12,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            elevation: 2,
+            borderWidth: 1,
+            borderColor: colors.border,
           }}
         >
           <Ionicons name="chevron-back" size={24} color="#000" />
@@ -263,11 +251,11 @@ const HelpSupportScreen = () => {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: spacing.sectionSpacing * 4 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Contact Options */}
-        <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
+        <View style={{ paddingHorizontal: spacing.screenPadding, paddingTop: 10 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#000' }}>
             Get in Touch
           </Text>
@@ -275,19 +263,15 @@ const HelpSupportScreen = () => {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 }}>
             <TouchableOpacity
               onPress={handlePhoneCall}
-              style={{
+            style={[
+              surfaces.card,
+              {
                 flex: 1,
-                backgroundColor: '#fff',
-                borderRadius: 16,
                 padding: 16,
                 alignItems: 'center',
                 marginRight: 8,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
+              },
+            ]}
             >
               <View
                 style={{
@@ -312,19 +296,15 @@ const HelpSupportScreen = () => {
 
             <TouchableOpacity
               onPress={handleEmail}
-              style={{
+            style={[
+              surfaces.card,
+              {
                 flex: 1,
-                backgroundColor: '#fff',
-                borderRadius: 16,
                 padding: 16,
                 alignItems: 'center',
                 marginHorizontal: 4,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
+              },
+            ]}
             >
               <View
                 style={{
@@ -349,19 +329,15 @@ const HelpSupportScreen = () => {
 
             <TouchableOpacity
               onPress={() => setShowContactModal(true)}
-              style={{
+            style={[
+              surfaces.card,
+              {
                 flex: 1,
-                backgroundColor: '#fff',
-                borderRadius: 16,
                 padding: 16,
                 alignItems: 'center',
                 marginLeft: 8,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
+              },
+            ]}
             >
               <View
                 style={{
@@ -387,7 +363,7 @@ const HelpSupportScreen = () => {
         </View>
 
         {/* FAQ Section */}
-        <View style={{ paddingHorizontal: 20 }}>
+        <View style={{ paddingHorizontal: spacing.screenPadding }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#000' }}>
             Frequently Asked Questions
           </Text>
@@ -396,17 +372,13 @@ const HelpSupportScreen = () => {
             <TouchableOpacity
               key={faq.id}
               onPress={() => toggleFAQ(faq.id)}
-              style={{
-                backgroundColor: '#fff',
-                borderRadius: 16,
-                padding: 16,
-                marginBottom: 12,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 3,
-              }}
+              style={[
+                surfaces.card,
+                {
+                  padding: 16,
+                  marginBottom: 12,
+                },
+              ]}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', flex: 1, marginRight: 12 }}>
@@ -436,28 +408,24 @@ const HelpSupportScreen = () => {
         </View>
 
         {/* Quick Actions */}
-        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+        <View style={{ paddingHorizontal: spacing.screenPadding, marginTop: 24 }}>
           <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 16, color: '#000' }}>
             Quick Actions
           </Text>
           
           <TouchableOpacity
             onPress={() => router.push('/order-history')}
-            style={{
-              backgroundColor: '#fff',
-              borderRadius: 16,
-              padding: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: 12,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
-            }}
+            style={[
+              surfaces.card,
+              {
+                padding: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 12,
+              },
+            ]}
           >
-            <Ionicons name="receipt" size={24} color="#007bff" style={{ marginRight: 12 }} />
+            <Ionicons name="receipt" size={24} color="#111" style={{ marginRight: 12 }} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#000' }}>
                 View Order History
@@ -471,21 +439,17 @@ const HelpSupportScreen = () => {
 
           <TouchableOpacity
             onPress={() => router.push('/shipping-address')}
-            style={{
-              backgroundColor: '#fff',
-              borderRadius: 16,
-              padding: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: 12,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
-            }}
+            style={[
+              surfaces.card,
+              {
+                padding: 16,
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: 12,
+              },
+            ]}
           >
-            <Ionicons name="location" size={24} color="#28a745" style={{ marginRight: 12 }} />
+            <Ionicons name="location" size={24} color="#111" style={{ marginRight: 12 }} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#000' }}>
                 Manage Addresses

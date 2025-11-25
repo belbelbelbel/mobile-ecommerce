@@ -11,7 +11,7 @@ export default function LogoPart() {
                     <View style={{ display: 'flex', flexDirection: 'row', gap: 15, alignItems: 'center' }}>
                         <Image source={require('../assets/images/logo.png')} style={{ height: 45, width: 45 }} />
                         <Text style={{ color: "white", fontSize: 60, fontFamily: "ClashDisplay-Bold", letterSpacing: 2 }}>
-                            Leuze
+                            ShopNest
                         </Text>
                     </View>
 

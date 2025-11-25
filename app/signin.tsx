@@ -1,10 +1,11 @@
-import { View, Text, SafeAreaView, ImageBackground, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, SafeAreaView, ImageBackground, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
 import React, { useState } from 'react'
 import LogoPart from '@/components/LogoPart'
 import InputComponent from '@/components/InputComponent'
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { signInWithEmail, signUpWithEmailAndPassword } from '@/services/auth';
+import { useToast } from '@/contexts/ToastContext';
 
 const SignIn = () => {
     const [form, setForm] = useState({
@@ -15,6 +16,7 @@ const SignIn = () => {
     const [isSignUp, setIsSignUp] = useState(false);
     const [loading, setLoading] = useState(false);
     const routes = useRouter()
+    const { showToast } = useToast();
 
     const handleOnChangeForm = (name: string, value: string) => {
         setForm(prevForm => ({
@@ -26,7 +28,7 @@ const SignIn = () => {
     const handleSignIn = async() => {
         const { email, password } = form;
         if (!email || !password) {
-            Alert.alert('Error', 'Please fill in all the fields');
+            showToast('Please fill in all the fields.', 'error');
             return;
         }
 
@@ -36,8 +38,8 @@ const SignIn = () => {
             routes.replace('/(tabs)');
             setForm({ email: '', password: '', displayName: '' });
         } catch (error: any) {
-            Alert.alert('Sign In Error', error.message);
-             console.log('Sign Up Error', error.message);
+            showToast(error.message || 'Unable to sign in.', 'error');
+            console.log('Sign In Error', error.message);
         } finally {
             setLoading(false);
         }
@@ -46,12 +48,12 @@ const SignIn = () => {
     const handleSignUp = async() => {
         const { email, password, displayName } = form;
         if (!email || !password || !displayName) {
-            Alert.alert('Error', 'Please fill in all the fields');
+            showToast('Please fill in all the fields.', 'error');
             return;
         }
 
         if (password.length < 6) {
-            Alert.alert('Error', 'Password should be at least 6 characters');
+            showToast('Password should be at least 6 characters.', 'error');
             return;
         }
 
@@ -59,12 +61,11 @@ const SignIn = () => {
             setLoading(true);
             await signUpWithEmailAndPassword(email, password, displayName);
             
-            Alert.alert('Success', 'Account created successfully!', [
-                { text: 'OK', onPress: () => routes.replace('/(tabs)') }
-            ]);
+            showToast('Account created successfully!', 'success');
+            routes.replace('/(tabs)');
             setForm({ email: '', password: '', displayName: '' });
         } catch (error: any) {
-            Alert.alert('Sign Up Error', error.message);
+            showToast(error.message || 'Unable to sign up.', 'error');
             console.log('Sign Up Error', error.message);
         } finally {
             setLoading(false);

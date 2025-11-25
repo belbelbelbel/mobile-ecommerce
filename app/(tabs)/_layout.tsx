@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { View } from 'react-native';
+import { colors } from '@/styles/theme';
 
 export default function TabLayout() {
   return (
@@ -18,11 +19,8 @@ export default function TabLayout() {
           paddingBottom: 10,
           paddingTop: 10,
           position: 'absolute',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
+          borderWidth: 1,
+          borderColor: colors.border,
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -60,7 +58,7 @@ export default function TabLayout() {
                   position: 'absolute',
                   top: -5,
                   right: -8,
-                  backgroundColor: '#ff4444',
+                  backgroundColor: '#ef4444',
                   borderRadius: 8,
                   width: 16,
                   height: 16,
@@ -72,7 +70,7 @@ export default function TabLayout() {
                   style={{
                     width: 8,
                     height: 8,
-                    backgroundColor: '#ff4444',
+                    backgroundColor: '#ef4444',
                     borderRadius: 4,
                   }}
                 />

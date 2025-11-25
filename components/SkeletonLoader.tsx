@@ -56,11 +56,6 @@ export const ProductCardSkeleton: React.FC = () => {
         borderRadius: 16,
         padding: 12,
         marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
       }}
     >
       {/* Image Skeleton with overlay elements */}

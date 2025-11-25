@@ -16,6 +16,7 @@ import { getAllProducts, Product } from '../../services/products';
 import { useCart } from '../../contexts/CartContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ProductGridSkeleton } from '../../components/SkeletonLoader';
+import { layout, spacing, surfaces } from '@/styles/theme';
 
 interface ProductWithFavorite extends Product {
   isFavorite: boolean;
@@ -110,18 +111,14 @@ export default function FavoritesPage() {
 
   const renderFavoriteItem = ({ item }: { item: ProductWithFavorite }) => (
     <TouchableOpacity
-      style={{
-        width: '48%',
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 12,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}
+      style={[
+        surfaces.card,
+        {
+          width: '48%',
+          padding: 12,
+          marginBottom: spacing.sectionSpacing - 8,
+        },
+      ]}
       onPress={() => router.push({ pathname: "/ProductsDetails/[id]", params: { id: item.name || '' } })}
     >
       <View style={{ position: 'relative' }}>
@@ -129,23 +126,23 @@ export default function FavoritesPage() {
         <View
           style={{
             position: 'absolute',
-            top: 8,
-            left: 8,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            borderRadius: 12,
-            paddingHorizontal: 8,
-            paddingVertical: 4,
+            top: 10,
+            left: 10,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            borderRadius: 8,
+            paddingHorizontal: 6,
+            paddingVertical: 3,
             flexDirection: 'row',
             alignItems: 'center',
             zIndex: 1,
           }}
         >
-          <Ionicons name="star" size={12} color="#FFD700" />
+          <Ionicons name="star" size={10} color="#fbbf24" />
           <Text
             style={{
-              fontSize: 11,
+              fontSize: 10,
               color: '#fff',
-              marginLeft: 2,
+              marginLeft: 3,
               fontWeight: '600',
             }}
           >
@@ -157,16 +154,21 @@ export default function FavoritesPage() {
         <TouchableOpacity
           style={{
             position: 'absolute',
-            top: 8,
-            right: 8,
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            top: 10,
+            right: 10,
+            width: 32,
+            height: 32,
             borderRadius: 16,
-            padding: 6,
+            backgroundColor: '#fff',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#e5e7eb',
             zIndex: 1,
           }}
           onPress={() => removeFavorite(item.id || '')}
         >
-          <Ionicons name="heart" size={18} color="#ff4444" />
+          <Ionicons name="heart" size={16} color="#ef4444" />
         </TouchableOpacity>
 
         <Image
@@ -185,8 +187,8 @@ export default function FavoritesPage() {
       <Text
         style={{
           fontSize: 14,
-          fontWeight: 'bold',
-          color: '#000',
+          fontWeight: '600',
+          color: '#111',
           marginBottom: 4,
           lineHeight: 18,
         }}
@@ -198,7 +200,7 @@ export default function FavoritesPage() {
       <Text
         style={{
           fontSize: 12,
-          color: '#666',
+          color: '#6b7280',
           marginBottom: 8,
         }}
       >
@@ -210,8 +212,8 @@ export default function FavoritesPage() {
         <Text
           style={{
             fontSize: 16,
-            fontWeight: 'bold',
-            color: '#000',
+            fontWeight: '700',
+            color: '#111',
           }}
         >
           ${item.price}
@@ -242,7 +244,7 @@ export default function FavoritesPage() {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={layout.screenContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       
       {/* Header */}
@@ -250,16 +252,15 @@ export default function FavoritesPage() {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: 20,
+          paddingHorizontal: spacing.screenPadding,
           paddingVertical: 16,
-          backgroundColor: '#f8f9fa',
         }}
       >
         <Text
           style={{
             fontSize: 24,
-            fontWeight: 'bold',
-            color: '#000',
+            fontWeight: '700',
+            color: '#111',
           }}
         >
           Favorites
@@ -268,7 +269,7 @@ export default function FavoritesPage() {
           <Text
             style={{
               fontSize: 16,
-              color: '#666',
+              color: '#6b7280',
               marginLeft: 8,
             }}
           >
@@ -335,9 +336,12 @@ export default function FavoritesPage() {
           numColumns={2}
           columnWrapperStyle={{
             justifyContent: 'space-between',
-            paddingHorizontal: 20,
+            paddingHorizontal: spacing.screenPadding,
           }}
-          contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}
+          contentContainerStyle={{
+            paddingBottom: spacing.sectionSpacing * 3,
+            paddingTop: 10,
+          }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

@@ -7,58 +7,52 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { signOutUser } from '../../services/auth';
 import { useRouter } from 'expo-router';
+import { colors, layout, spacing, surfaces } from '@/styles/theme';
+import { useToast } from '../../contexts/ToastContext';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 export default function ProfilePage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { showToast } = useToast();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              await signOutUser();
-              router.replace('/signin');
-            } catch (error: any) {
-              Alert.alert('Error', 'Failed to logout. Please try again.');
-              console.error('Logout error:', error);
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ],
-    );
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    try {
+      setLoading(true);
+      await signOutUser();
+      showToast('Signed out successfully.', 'success');
+      router.replace('/signin');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      showToast('Failed to logout. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+      setShowLogoutModal(false);
+    }
   };
 
   const handleMenuPress = (title: string) => {
     switch (title) {
       case 'Edit Profile':
-        Alert.alert('Coming Soon', 'Edit Profile feature will be available soon.');
+        showToast('Edit Profile feature will be available soon.', 'info');
         break;
       case 'Shipping Address':
         router.push('/shipping-address');
         break;
       case 'Payment Methods':
-        Alert.alert('Coming Soon', 'Payment Methods management will be available soon.');
+        showToast('Payment methods will be available soon.', 'info');
         break;
       case 'Order History':
         router.push('/order-history');
@@ -70,7 +64,7 @@ export default function ProfilePage() {
         router.push('/help-support');
         break;
       case 'Settings':
-        Alert.alert('Coming Soon', 'Settings will be available soon.');
+        showToast('Settings will be available soon.', 'info');
         break;
       case 'Logout':
         handleLogout();
@@ -88,7 +82,7 @@ export default function ProfilePage() {
     { icon: 'notifications-outline', title: 'Notifications', color: '#666' },
     { icon: 'help-circle-outline', title: 'Help & Support', color: '#666' },
     { icon: 'settings-outline', title: 'Settings', color: '#666' },
-    { icon: 'log-out-outline', title: 'Logout', color: '#ff4444' },
+    { icon: 'log-out-outline', title: 'Logout', color: '#ef4444' },
   ];
 
   // Show loading state while authentication is being checked
@@ -108,7 +102,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={layout.screenContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       
       {/* Header */}
@@ -116,9 +110,8 @@ export default function ProfilePage() {
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: 20,
+          paddingHorizontal: spacing.screenPadding,
           paddingVertical: 16,
-          backgroundColor: '#f8f9fa',
         }}
       >
         <Text
@@ -134,25 +127,21 @@ export default function ProfilePage() {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: spacing.sectionSpacing * 4 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Profile Info Section */}
         <View
-          style={{
-            backgroundColor: '#fff',
-            marginHorizontal: 20,
-            marginTop: 10,
-            marginBottom: 20,
-            borderRadius: 16,
-            padding: 20,
-            alignItems: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }}
+          style={[
+            surfaces.card,
+            {
+              marginHorizontal: spacing.screenPadding,
+              marginTop: 10,
+              marginBottom: spacing.sectionSpacing - 8,
+              padding: 20,
+              alignItems: 'center',
+            },
+          ]}
         >
           {/* User Avatar */}
           <View
@@ -164,11 +153,6 @@ export default function ProfilePage() {
               marginBottom: 16,
               justifyContent: 'center',
               alignItems: 'center',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 4,
             }}
           >
             {userProfile?.photoURL ? (
@@ -215,11 +199,6 @@ export default function ProfilePage() {
               borderRadius: 25,
               paddingHorizontal: 32,
               paddingVertical: 12,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.2,
-              shadowRadius: 4,
-              elevation: 3,
             }}
             onPress={() => handleMenuPress('Edit Profile')}
           >
@@ -237,18 +216,14 @@ export default function ProfilePage() {
 
         {/* Quick Actions */}
         <View
-          style={{
-            backgroundColor: '#fff',
-            marginHorizontal: 20,
-            marginBottom: 20,
-            borderRadius: 16,
-            overflow: 'hidden',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }}
+          style={[
+            surfaces.card,
+            {
+              marginHorizontal: spacing.screenPadding,
+              marginBottom: spacing.sectionSpacing - 8,
+              overflow: 'hidden',
+            },
+          ]}
         >
           <Text
             style={{
@@ -329,18 +304,14 @@ export default function ProfilePage() {
 
         {/* Settings & Support */}
         <View
-          style={{
-            backgroundColor: '#fff',
-            marginHorizontal: 20,
-            marginBottom: 20,
-            borderRadius: 16,
-            overflow: 'hidden',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }}
+          style={[
+            surfaces.card,
+            {
+              marginHorizontal: spacing.screenPadding,
+              marginBottom: spacing.sectionSpacing - 8,
+              overflow: 'hidden',
+            },
+          ]}
         >
           <Text
             style={{
@@ -420,18 +391,14 @@ export default function ProfilePage() {
 
         {/* Logout Section */}
         <View
-          style={{
-            backgroundColor: '#fff',
-            marginHorizontal: 20,
-            marginBottom: 20,
-            borderRadius: 16,
-            overflow: 'hidden',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }}
+          style={[
+            surfaces.card,
+            {
+              marginHorizontal: spacing.screenPadding,
+              marginBottom: spacing.sectionSpacing - 8,
+              overflow: 'hidden',
+            },
+          ]}
         >
           <TouchableOpacity
             style={{
@@ -458,14 +425,14 @@ export default function ProfilePage() {
               <Ionicons
                 name="log-out-outline"
                 size={20}
-                color="#ff4444"
+                color="#ef4444"
               />
             </View>
             <View style={{ flex: 1 }}>
               <Text
                 style={{
                   fontSize: 16,
-                  color: '#ff4444',
+                  color: '#ef4444',
                   fontWeight: '600',
                   marginBottom: 2,
                 }}
@@ -482,7 +449,7 @@ export default function ProfilePage() {
               </Text>
             </View>
             {loading ? (
-              <ActivityIndicator size="small" color="#ff4444" />
+              <ActivityIndicator size="small" color="#ef4444" />
             ) : (
               <Ionicons
                 name="chevron-forward"
@@ -493,6 +460,16 @@ export default function ProfilePage() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <ConfirmationModal
+        visible={showLogoutModal}
+        title="Logout"
+        message="Are you sure you want to logout?"
+        confirmText="Logout"
+        cancelText="Stay Logged In"
+        loading={loading}
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={confirmLogout}
+      />
     </SafeAreaView>
   );
 }

@@ -3,6 +3,7 @@ import React from 'react';
 import { products } from '@/constant/Content';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '@/styles/theme';
 
 export default function TopDeals() {
   const topRatedProducts = products.filter(product => product.rating > 4.8);
@@ -71,11 +72,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 5,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
 
   productImage: {

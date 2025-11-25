@@ -7,13 +7,15 @@ import {
   TouchableOpacity,
   StatusBar,
   ActivityIndicator,
-  Alert,
   TextInput,
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { useToast } from '../contexts/ToastContext';
+import { layout, spacing, surfaces, colors } from '@/styles/theme';
 
 interface Address {
   id: string;
@@ -29,10 +31,13 @@ interface Address {
 
 const ShippingAddressScreen = () => {
   const router = useRouter();
+  const { showToast } = useToast();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Address | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -88,8 +93,15 @@ const ShippingAddressScreen = () => {
   };
 
   const handleSaveAddress = async () => {
-    if (!formData.name || !formData.phone || !formData.street || !formData.city || !formData.state || !formData.zipCode) {
-      Alert.alert('Error', 'Please fill in all required fields');
+    if (
+      !formData.name ||
+      !formData.phone ||
+      !formData.street ||
+      !formData.city ||
+      !formData.state ||
+      !formData.zipCode
+    ) {
+      showToast('Please fill in all required fields.', 'error');
       return;
     }
 
@@ -110,36 +122,19 @@ const ShippingAddressScreen = () => {
       }
 
       await saveAddresses(updatedAddresses);
+      showToast(editingAddress ? 'Address updated.' : 'Address added.', 'success');
       resetForm();
       setShowAddModal(false);
       setEditingAddress(null);
     } catch (error) {
-      Alert.alert('Error', 'Failed to save address');
+      console.error('Error saving address:', error);
+      showToast('Failed to save address. Please try again.', 'error');
     }
   };
 
   const handleDeleteAddress = (addressId: string) => {
-    Alert.alert(
-      'Delete Address',
-      'Are you sure you want to delete this address?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const updatedAddresses = addresses.filter(addr => addr.id !== addressId);
-            
-            // If we deleted the default address, make the first remaining one default
-            if (updatedAddresses.length > 0 && !updatedAddresses.some(addr => addr.isDefault)) {
-              updatedAddresses[0].isDefault = true;
-            }
-            
-            await saveAddresses(updatedAddresses);
-          },
-        },
-      ]
-    );
+    const target = addresses.find((addr) => addr.id === addressId) || null;
+    setDeleteTarget(target);
   };
 
   const handleSetDefault = async (addressId: string) => {
@@ -179,20 +174,16 @@ const ShippingAddressScreen = () => {
   const renderAddressItem = (address: Address) => (
     <View
       key={address.id}
-      style={{
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginHorizontal: 20,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-        borderWidth: address.isDefault ? 2 : 0,
-        borderColor: address.isDefault ? '#007bff' : 'transparent',
-      }}
+      style={[
+        surfaces.card,
+        {
+          padding: 16,
+          marginHorizontal: spacing.screenPadding,
+          marginBottom: spacing.sectionSpacing - 8,
+          borderWidth: address.isDefault ? 2 : 1,
+          borderColor: address.isDefault ? '#111' : colors.border,
+        },
+      ]}
     >
       {/* Default Badge */}
       {address.isDefault && (
@@ -201,7 +192,7 @@ const ShippingAddressScreen = () => {
             position: 'absolute',
             top: 12,
             right: 12,
-            backgroundColor: '#007bff',
+            backgroundColor: '#111',
             borderRadius: 12,
             paddingHorizontal: 8,
             paddingVertical: 4,
@@ -270,7 +261,7 @@ const ShippingAddressScreen = () => {
           <TouchableOpacity
             onPress={() => handleSetDefault(address.id)}
             style={{
-              backgroundColor: '#007bff',
+              backgroundColor: '#111',
               borderRadius: 8,
               paddingHorizontal: 12,
               paddingVertical: 6,
@@ -311,13 +302,13 @@ const ShippingAddressScreen = () => {
               resetForm();
             }}
           >
-            <Text style={{ fontSize: 16, color: '#007bff' }}>Cancel</Text>
+            <Text style={{ fontSize: 16, color: '#111' }}>Cancel</Text>
           </TouchableOpacity>
           <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
             {editingAddress ? 'Edit Address' : 'Add Address'}
           </Text>
           <TouchableOpacity onPress={handleSaveAddress}>
-            <Text style={{ fontSize: 16, color: '#007bff', fontWeight: '600' }}>Save</Text>
+            <Text style={{ fontSize: 16, color: '#111', fontWeight: '600' }}>Save</Text>
           </TouchableOpacity>
         </View>
 
@@ -451,7 +442,7 @@ const ShippingAddressScreen = () => {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={layout.screenContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       
       {/* Header */}
@@ -460,9 +451,8 @@ const ShippingAddressScreen = () => {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          paddingHorizontal: 20,
+          paddingHorizontal: spacing.screenPadding,
           paddingVertical: 16,
-          backgroundColor: '#f8f9fa',
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -476,11 +466,8 @@ const ShippingAddressScreen = () => {
               justifyContent: 'center',
               alignItems: 'center',
               marginRight: 12,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-              elevation: 2,
+              borderWidth: 1,
+              borderColor: colors.border,
             }}
           >
             <Ionicons name="chevron-back" size={24} color="#000" />
@@ -502,7 +489,7 @@ const ShippingAddressScreen = () => {
             setShowAddModal(true);
           }}
           style={{
-            backgroundColor: '#007bff',
+            backgroundColor: '#111',
             borderRadius: 8,
             paddingHorizontal: 12,
             paddingVertical: 6,
@@ -574,7 +561,10 @@ const ShippingAddressScreen = () => {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingTop: 10, paddingBottom: 100 }}
+          contentContainerStyle={{
+            paddingTop: 10,
+            paddingBottom: spacing.sectionSpacing * 4,
+          }}
           showsVerticalScrollIndicator={false}
         >
           {addresses.map(renderAddressItem)}
@@ -582,6 +572,35 @@ const ShippingAddressScreen = () => {
       )}
 
       {renderFormModal()}
+      <ConfirmationModal
+        visible={Boolean(deleteTarget)}
+        title="Delete Address"
+        message={`Delete "${deleteTarget?.street || 'this address'}"?`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        loading={deleteLoading}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) {
+            return;
+          }
+          try {
+            setDeleteLoading(true);
+            const updatedAddresses = addresses.filter((addr) => addr.id !== deleteTarget.id);
+            if (updatedAddresses.length > 0 && !updatedAddresses.some((addr) => addr.isDefault)) {
+              updatedAddresses[0].isDefault = true;
+            }
+            await saveAddresses(updatedAddresses);
+            showToast('Address deleted.', 'success');
+          } catch (error) {
+            console.error('Error deleting address:', error);
+            showToast('Failed to delete address.', 'error');
+          } finally {
+            setDeleteLoading(false);
+            setDeleteTarget(null);
+          }
+        }}
+      />
     </SafeAreaView>
   );
 };

@@ -7,90 +7,94 @@ import {
   Image,
   SafeAreaView,
   StatusBar,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCart, CartItem } from '../../contexts/CartContext';
 import { CartItemSkeleton } from '../../components/SkeletonLoader';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import { useToast } from '../../contexts/ToastContext';
+import { colors, layout, spacing, surfaces } from '@/styles/theme';
 
 export default function CartPage() {
   const router = useRouter();
-  const { cartItems, cartCount, totalPrice, removeFromCart, updateQuantity, clearCart, loading } = useCart();
-  const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
+  const { cartItems, cartCount, totalPrice, removeFromCart, updateQuantity, clearCart, loading } =
+    useCart();
+  const { showToast } = useToast();
+  const [confirmationState, setConfirmationState] = useState<{
+    visible: boolean;
+    type: 'remove' | 'clear';
+    item?: CartItem;
+  }>({ visible: false, type: 'remove' });
+  const [confirmationLoading, setConfirmationLoading] = useState(false);
 
   const handleQuantityUpdate = async (productId: string, newQuantity: number) => {
     try {
       // Don't show skeleton loading for quantity updates, just update directly
       await updateQuantity(productId, newQuantity);
     } catch (error) {
-      Alert.alert('Error', 'Failed to update quantity. Please try again.');
+      showToast('Failed to update quantity. Please try again.', 'error');
     }
   };
 
-  const handleRemoveItem = async (item: CartItem) => {
-    Alert.alert(
-      'Remove Item',
-      `Are you sure you want to remove "${item.name}" from your cart?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await removeFromCart(item.id || '');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to remove item. Please try again.');
-            }
-          },
-        },
-      ]
-    );
+  const promptRemoveItem = (item: CartItem) => {
+    setConfirmationState({ visible: true, type: 'remove', item });
   };
 
-  const handleClearCart = () => {
-    Alert.alert(
-      'Clear Cart',
-      'Are you sure you want to remove all items from your cart?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All',
-          style: 'destructive',
-          onPress: clearCart,
-        },
-      ]
-    );
+  const promptClearCart = () => {
+    setConfirmationState({ visible: true, type: 'clear' });
   };
 
   const handleCheckout = () => {
     if (cartItems.length === 0) {
-      Alert.alert('Cart Empty', 'Please add some items to your cart before checking out.');
+      showToast('Add items to your cart before checking out.', 'info');
       return;
     }
-    Alert.alert('Coming Soon', 'Checkout functionality will be available soon!');
+    router.push('/checkout');
+  };
+
+  const closeConfirmation = () => {
+    setConfirmationState((prev) => ({ ...prev, visible: false, item: undefined }));
+    setConfirmationLoading(false);
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmationState.visible) {
+      return;
+    }
+
+    try {
+      setConfirmationLoading(true);
+      if (confirmationState.type === 'remove' && confirmationState.item) {
+        await removeFromCart(confirmationState.item.id || '');
+        showToast(`${confirmationState.item.name} removed from cart.`, 'success');
+      } else if (confirmationState.type === 'clear') {
+        await clearCart();
+        showToast('Cart cleared.', 'info');
+      }
+      closeConfirmation();
+    } catch (error) {
+      console.error('Cart action error:', error);
+      showToast('Something went wrong. Please try again.', 'error');
+      setConfirmationLoading(false);
+    }
   };
 
   const renderCartItem = (item: CartItem) => {
     return (
       <View
         key={item.id}
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: 16,
-          padding: 16,
-          marginHorizontal: 20,
-          marginBottom: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 3,
-        }}
+        style={[
+          surfaces.card,
+          {
+            padding: 16,
+            marginHorizontal: spacing.screenPadding,
+            marginBottom: spacing.sectionSpacing - 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+          },
+        ]}
       >
         {/* Product Image */}
         <Image
@@ -197,23 +201,28 @@ export default function CartPage() {
         <TouchableOpacity
           style={{
             position: 'absolute',
-            top: 8,
-            right: 8,
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            borderRadius: 12,
-            padding: 4,
+            top: 12,
+            right: 12,
+            width: 28,
+            height: 28,
+            borderRadius: 14,
+            backgroundColor: '#f3f4f6',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#e5e7eb',
           }}
-          onPress={() => handleRemoveItem(item)}
+          onPress={() => promptRemoveItem(item)}
           disabled={false}
         >
-          <Ionicons name="close" size={16} color="#ff4444" />
+          <Ionicons name="close" size={14} color="#6b7280" />
         </TouchableOpacity>
       </View>
     );
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={layout.screenContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       
       {/* Header */}
@@ -222,9 +231,8 @@ export default function CartPage() {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          paddingHorizontal: 20,
+          paddingHorizontal: spacing.screenPadding,
           paddingVertical: 16,
-          backgroundColor: '#f8f9fa',
         }}
       >
         <Text
@@ -254,14 +262,16 @@ export default function CartPage() {
 
           {cartItems.length > 0 && (
             <TouchableOpacity
-              onPress={handleClearCart}
+              onPress={promptClearCart}
               style={{
-                backgroundColor: '#ff4444',
+                backgroundColor: '#f3f4f6',
                 borderRadius: 8,
                 padding: 8,
+                borderWidth: 1,
+                borderColor: '#e5e7eb',
               }}
             >
-              <Ionicons name="trash-outline" size={20} color="#fff" />
+              <Ionicons name="trash-outline" size={18} color="#6b7280" />
             </TouchableOpacity>
           )}
         </View>
@@ -269,7 +279,7 @@ export default function CartPage() {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 200 }}
+        contentContainerStyle={{ paddingBottom: spacing.sectionSpacing * 3 }}
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
@@ -344,14 +354,11 @@ export default function CartPage() {
             backgroundColor: '#fff',
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            paddingHorizontal: 20,
+            paddingHorizontal: spacing.screenPadding,
             paddingTop: 20,
-            paddingBottom: 100, // Extra padding to clear tab bar
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 5,
+            paddingBottom: 100,
+            borderTopWidth: 1,
+            borderColor: colors.border,
           }}
         >
           <View
@@ -409,6 +416,21 @@ export default function CartPage() {
           </TouchableOpacity>
         </View>
       )}
+
+      <ConfirmationModal
+        visible={confirmationState.visible}
+        title={confirmationState.type === 'remove' ? 'Remove Item' : 'Clear Cart'}
+        message={
+          confirmationState.type === 'remove'
+            ? `Remove "${confirmationState.item?.name}" from your cart?`
+            : 'This will remove every item from your cart.'
+        }
+        confirmText={confirmationState.type === 'remove' ? 'Remove' : 'Clear'}
+        cancelText="Keep Items"
+        loading={confirmationLoading}
+        onCancel={closeConfirmation}
+        onConfirm={handleConfirmAction}
+      />
     </SafeAreaView>
   );
 }

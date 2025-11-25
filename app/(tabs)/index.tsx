@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   TextInput,
   Image,
@@ -10,42 +9,46 @@ import {
   SafeAreaView,
   StatusBar,
   ActivityIndicator,
-  RefreshControl,
-  Alert,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import {
   getAllProducts,
-  getProductsByCategory,
-  searchProducts,
   initializeSampleProducts,
-  Product
+  Product,
 } from '../../services/products';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ProductGridSkeleton } from '../../components/SkeletonLoader';
+import { useToast } from '../../contexts/ToastContext';
+import { useDebounce } from 'use-debounce';
+import { colors, layout, spacing, surfaces } from '@/styles/theme';
 
-const categories = ['All Items', 'Dress', 'T-Shirt', 'Pants'];
+const DEFAULT_CATEGORY = 'All Items';
 
 interface ProductWithFavorite extends Product {
   isFavorite: boolean;
 }
 
 export default function HomePage() {
-  const [selectedCategory, setSelectedCategory] = useState('All Items');
+  const [selectedCategory, setSelectedCategory] = useState(DEFAULT_CATEGORY);
   const [searchText, setSearchText] = useState('');
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [products, setProducts] = useState<ProductWithFavorite[]>([]);
+  const [categories, setCategories] = useState<string[]>([DEFAULT_CATEGORY]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const { user, userProfile } = useAuth();
-  const { addToCart, cartCount } = useCart();
+  const { addToCart } = useCart();
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
+  const { showToast } = useToast();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [debouncedSearch] = useDebounce(searchText, 350);
 
-  // Load favorites from AsyncStorage
   const loadFavorites = async (): Promise<Set<string>> => {
     try {
       const favoritesData = await AsyncStorage.getItem('favorites');
@@ -59,75 +62,90 @@ export default function HomePage() {
     return new Set<string>();
   };
 
+  const loadProducts = useCallback(
+    async (silent = false) => {
+      try {
+        if (!silent) {
+      setLoading(true);
+        }
+        setErrorMessage(null);
+      const loadedFavorites = await loadFavorites();
+      setFavorites(loadedFavorites);
+
+        let fetchedProducts = await getAllProducts();
+        if (fetchedProducts.length === 0) {
+          await initializeSampleProducts();
+          fetchedProducts = await getAllProducts();
+        }
+
+        setAllProducts(fetchedProducts);
+
+        const derivedCategories = [
+          DEFAULT_CATEGORY,
+          ...Array.from(
+            new Set(
+              fetchedProducts
+                .map((product) => product.category)
+                .filter((category) => Boolean(category)),
+            ),
+          ),
+        ];
+        setCategories(derivedCategories);
+        setSelectedCategory((prev) =>
+          prev === DEFAULT_CATEGORY || derivedCategories.includes(prev) ? prev : DEFAULT_CATEGORY,
+        );
+    } catch (error) {
+      console.error('Error loading products:', error);
+        setErrorMessage('Failed to load products.');
+        showToast('Failed to load products. Pull to refresh to retry.', 'error');
+    } finally {
+        if (!silent) {
+      setLoading(false);
+    }
+      }
+    },
+    [showToast],
+  );
 
   useEffect(() => {
     loadProducts();
-  }, []);
-
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      const loadedFavorites = await loadFavorites();
-      setFavorites(loadedFavorites);
-      const fetchedProducts = await getAllProducts();
-      const productsWithFavorites = fetchedProducts.map(product => ({
-        ...product,
-        isFavorite: loadedFavorites.has(product.id || ''),
-      }));
-
-      setProducts(productsWithFavorites);
-    } catch (error) {
-      console.error('Error loading products:', error);
-      Alert.alert('Error', 'Failed to load products. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    filterProducts();
-  }, [selectedCategory, searchText]);
+  }, [loadProducts]);
 
     const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadProducts();
+    await loadProducts(true);
     setRefreshing(false);
-  }, []);
+  }, [loadProducts]);
 
-  const filterProducts = async () => {
-    try {
-      setLoading(true);
-      let fetchedProducts: Product[] = [];
+  useEffect(() => {
+    const normalizedSearch = debouncedSearch.trim().toLowerCase();
 
-      if (selectedCategory === 'All Items') {
-        if (searchText) {
-          fetchedProducts = await searchProducts(searchText);
-        } else {
-          fetchedProducts = await getAllProducts();
+    const filteredProducts = allProducts
+      .filter((product) =>
+        selectedCategory === DEFAULT_CATEGORY ? true : product.category === selectedCategory,
+      )
+      .filter((product) => {
+        if (!normalizedSearch) {
+          return true;
         }
-      } else {
-        fetchedProducts = await getProductsByCategory(selectedCategory);
-        if (searchText) {
-          fetchedProducts = fetchedProducts.filter(product =>
-            product.name.toLowerCase().includes(searchText.toLowerCase()) ||
-            product.description.toLowerCase().includes(searchText.toLowerCase())
-          );
-        }
-      }
-
-      const productsWithFavorites = fetchedProducts.map(product => ({
+        return (
+          product.name.toLowerCase().includes(normalizedSearch) ||
+          product.description.toLowerCase().includes(normalizedSearch) ||
+          product.category.toLowerCase().includes(normalizedSearch)
+        );
+      })
+      .map((product) => ({
         ...product,
         isFavorite: favorites.has(product.id || ''),
       }));
 
-      setProducts(productsWithFavorites);
-    } catch (error) {
-      console.error('Error filtering products:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setProducts(filteredProducts);
+  }, [allProducts, favorites, selectedCategory, debouncedSearch]);
 
   const toggleFavorite = async (productId: string) => {
+    if (!productId) {
+      return;
+    }
     try {
       const newFavorites = new Set(favorites);
       if (newFavorites.has(productId)) {
@@ -135,23 +153,11 @@ export default function HomePage() {
       } else {
         newFavorites.add(productId);
       }
-      
-      // Update state
       setFavorites(newFavorites);
-      
-      // Save to AsyncStorage
       await AsyncStorage.setItem('favorites', JSON.stringify(Array.from(newFavorites)));
-      
-      // Update products
-      setProducts(prevProducts =>
-        prevProducts.map(product =>
-          product.id === productId
-            ? { ...product, isFavorite: !product.isFavorite }
-            : product
-        )
-      );
     } catch (error) {
       console.error('Error toggling favorite:', error);
+      showToast('Unable to update favorites. Please try again.', 'error');
     }
   };
 
@@ -159,9 +165,9 @@ export default function HomePage() {
     try {
       setAddingToCart(product.id || '');
       await addToCart(product);
-      Alert.alert('Success', `${product.name} added to cart!`);
+      showToast(`${product.name} added to cart!`, 'success');
     } catch (error) {
-      Alert.alert('Error', 'Failed to add item to cart. Please try again.');
+      showToast('Failed to add item to cart. Please try again.', 'error');
     } finally {
       setAddingToCart(null);
     }
@@ -169,42 +175,42 @@ export default function HomePage() {
 
   const renderProductItem = ({ item }: { item: ProductWithFavorite }) => (
     <TouchableOpacity
-      style={{
+      style={[
+        surfaces.card,
+        {
         width: '48%',
-        backgroundColor: '#fff',
-        borderRadius: 16,
         padding: 12,
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}
-      onPress={() => router.push({ pathname: "/ProductsDetails/[id]", params: { id: item.name || 'cargo pants' } })}
+          marginBottom: spacing.sectionSpacing - 8,
+        },
+      ]}
+      onPress={() =>
+        router.push({
+          pathname: '/ProductsDetails/[id]',
+          params: { id: item.id || item.name || '' },
+        })
+      }
     >
       <View style={{ position: 'relative' }}>
-        {/* Rating - Top Left */}
         <View
           style={{
             position: 'absolute',
-            top: 8,
-            left: 8,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            borderRadius: 12,
-            paddingHorizontal: 8,
-            paddingVertical: 4,
+            top: 10,
+            left: 10,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            borderRadius: 8,
+            paddingHorizontal: 6,
+            paddingVertical: 3,
             flexDirection: 'row',
             alignItems: 'center',
             zIndex: 1,
           }}
         >
-          <Ionicons name="star" size={12} color="#FFD700" />
+          <Ionicons name="star" size={10} color="#fbbf24" />
           <Text
             style={{
-              fontSize: 11,
+              fontSize: 10,
               color: '#fff',
-              marginLeft: 2,
+              marginLeft: 3,
               fontWeight: '600',
             }}
           >
@@ -212,23 +218,27 @@ export default function HomePage() {
           </Text>
         </View>
 
-        {/* Favorite Button - Top Right */}
         <TouchableOpacity
           style={{
             position: 'absolute',
-            top: 8,
-            right: 8,
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            top: 10,
+            right: 10,
+            width: 32,
+            height: 32,
             borderRadius: 16,
-            padding: 6,
+            backgroundColor: '#fff',
+            justifyContent: 'center',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#e5e7eb',
             zIndex: 1,
           }}
           onPress={() => toggleFavorite(item.id || '')}
         >
           <Ionicons
             name={item.isFavorite ? 'heart' : 'heart-outline'}
-            size={18}
-            color={item.isFavorite ? '#ff4444' : '#666'}
+            size={16}
+            color={item.isFavorite ? '#ef4444' : '#9ca3af'}
           />
         </TouchableOpacity>
 
@@ -244,12 +254,11 @@ export default function HomePage() {
         />
       </View>
 
-      {/* Product Info */}
       <Text
         style={{
           fontSize: 14,
-          fontWeight: 'bold',
-          color: '#000',
+          fontWeight: '600',
+          color: '#111',
           marginBottom: 4,
           lineHeight: 18,
         }}
@@ -261,27 +270,32 @@ export default function HomePage() {
       <Text
         style={{
           fontSize: 12,
-          color: '#666',
+          color: '#6b7280',
           marginBottom: 8,
         }}
       >
         {item.category}
       </Text>
 
-      {/* Price Row */}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 12,
+        }}
+      >
         <Text
           style={{
             fontSize: 16,
-            fontWeight: 'bold',
-            color: '#000',
+            fontWeight: '700',
+            color: '#111',
           }}
         >
           ${item.price}
         </Text>
       </View>
       
-      {/* Add to Cart Button - Full Width */}
       <TouchableOpacity
         style={{
           backgroundColor: '#000',
@@ -296,46 +310,30 @@ export default function HomePage() {
         {addingToCart === item.id ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (
-          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>
-            Add to Cart
-          </Text>
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Add to Cart</Text>
         )}
       </TouchableOpacity>
     </TouchableOpacity>
   );
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-
-      {/* Header Section */}
+  const renderHeader = () => (
+    <View
+      style={{
+        paddingHorizontal: spacing.screenPadding,
+        paddingBottom: spacing.sectionSpacing / 1.5,
+      }}
+    >
       <View
         style={{
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          paddingHorizontal: 20,
           paddingVertical: 16,
-          backgroundColor: '#f8f9fa',
         }}
       >
         <View>
-          <Text
-            style={{
-              fontSize: 16,
-              color: '#666',
-              marginBottom: 4,
-            }}
-          >
-            Hello, Welcome 👋
-          </Text>
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: 'bold',
-              color: '#000',
-            }}
-          >
+          <Text style={{ fontSize: 16, color: '#6b7280', marginBottom: 4 }}>Hello, Welcome 👋</Text>
+          <Text style={{ fontSize: 20, fontWeight: '700', color: '#111' }}>
             {userProfile?.displayName || user?.displayName || 'Guest'}
           </Text>
         </View>
@@ -345,7 +343,7 @@ export default function HomePage() {
             width: 50,
             height: 50,
             borderRadius: 25,
-            backgroundColor: '#ddd',
+            backgroundColor: '#e5e7eb',
             justifyContent: 'center',
             alignItems: 'center',
             overflow: 'hidden',
@@ -353,97 +351,70 @@ export default function HomePage() {
         >
           <Image
             source={require('../../assets/images/icon.png')}
-            style={{
-              width: 50,
-              height: 50,
-              borderRadius: 25,
-            }}
+            style={{ width: 50, height: 50, borderRadius: 25 }}
             resizeMode="cover"
           />
         </View>
       </View>
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh}/>
-        }
-      >
-        {/* Search Section */}
-        <View
-          style={{
-            paddingHorizontal: 20,
-            marginBottom: 20,
-          }}
-        >
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               backgroundColor: '#fff',
-              borderRadius: 15,
+          borderRadius: 12,
               paddingHorizontal: 16,
-              paddingVertical: 8,
-              // shadowColor: '#000',
-              // shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 3,
-            }}
-          >
+          paddingVertical: 12,
+          borderWidth: 1,
+          borderColor: colors.border,
+          marginBottom: spacing.sectionSpacing - 8,
+        }}
+      >
+        <Ionicons name="search" size={20} color="#9ca3af" style={{ marginRight: 12 }} />
             <TextInput
               style={{
                 flex: 1,
                 fontSize: 16,
-                color: '#000',
+            color: '#111',
+            padding: 0,
               }}
-              placeholder="Search clothes..."
-              placeholderTextColor="#999"
+          placeholder="Search products..."
+          placeholderTextColor="#9ca3af"
               value={searchText}
               onChangeText={setSearchText}
             />
+        {searchText.length > 0 && (
             <TouchableOpacity
+            onPress={() => setSearchText('')}
               style={{
-                backgroundColor: '#000',
+              width: 24,
+              height: 24,
                 borderRadius: 12,
-                padding: 8,
-                marginLeft: 12,
-              }}
-            >
-              <Ionicons name="options" size={18} color="#fff" />
+              backgroundColor: '#f3f4f6',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginLeft: 8,
+            }}
+          >
+            <Ionicons name="close-circle" size={16} color="#6b7280" />
             </TouchableOpacity>
-          </View>
+        )}
         </View>
 
-        {/* Category Filter Tabs */}
-        <View
-          style={{
-            paddingHorizontal: 20,
-            marginBottom: 24,
-          }}
-        >
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 12 }}
-          >
-            {categories.map((category) => (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {categories.map((category) => {
+          const isActive = selectedCategory === category;
+          return (
               <TouchableOpacity
                 key={category}
                 style={{
-                  backgroundColor: selectedCategory === category ? '#000' : '#fff',
+                backgroundColor: isActive ? '#000' : '#fff',
                   borderRadius: 15,
                   paddingHorizontal: 20,
                   paddingVertical: 10,
-                  borderWidth: selectedCategory === category ? 0 : 1,
-                  borderColor: '#e0e0e0',
-                  shadowColor: selectedCategory === category ? '#000' : 'transparent',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 4,
-                  elevation: selectedCategory === category ? 2 : 0,
+                borderWidth: 1,
+                borderColor: isActive ? '#000' : colors.border,
+                marginRight: 12,
                 }}
                 onPress={() => setSelectedCategory(category)}
               >
@@ -451,39 +422,108 @@ export default function HomePage() {
                   style={{
                     fontSize: 14,
                     fontWeight: '600',
-                    color: selectedCategory === category ? '#fff' : '#000',
+                  color: isActive ? '#fff' : '#000',
                   }}
                 >
                   {category}
                 </Text>
               </TouchableOpacity>
-            ))}
+          );
+        })}
           </ScrollView>
         </View>
+  );
 
-        {/* Product Grid */}
+  const renderEmptyState = () => (
         <View
+      style={{
+        paddingHorizontal: spacing.screenPadding,
+        paddingTop: spacing.sectionSpacing * 2.5,
+        alignItems: 'center',
+      }}
+    >
+      <Ionicons
+        name={errorMessage ? 'alert-circle-outline' : 'search-outline'}
+        size={64}
+        color="#d1d5db"
+        style={{ marginBottom: 16 }}
+      />
+      <Text style={{ fontSize: 18, fontWeight: '600', color: '#111', marginBottom: 8 }}>
+        {errorMessage ? 'Unable to load products' : 'No items found'}
+      </Text>
+      <Text
+        style={{
+          fontSize: 14,
+          color: '#6b7280',
+          textAlign: 'center',
+          marginBottom: 20,
+          lineHeight: 20,
+        }}
+      >
+        {errorMessage
+          ? 'Please pull to refresh or try again shortly.'
+          : 'Try adjusting your search or category filters.'}
+      </Text>
+      {errorMessage && (
+        <TouchableOpacity
+          onPress={() => loadProducts()}
           style={{
-            paddingHorizontal: 20,
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+            borderRadius: 12,
+            backgroundColor: '#111',
           }}
         >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>Retry</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  const renderLoadingState = () => (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingTop: spacing.sectionSpacing * 3,
+      }}
+    >
+      <ActivityIndicator size="large" color="#111" />
+      <View style={{ marginTop: 20, alignItems: 'center' }}>
+        <Ionicons name="shirt-outline" size={32} color="#d1d5db" style={{ marginBottom: 8 }} />
+        <Text style={{ fontSize: 14, color: '#6b7280', marginTop: 8 }}>Loading products...</Text>
+      </View>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={layout.screenContainer}>
+      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
+
           {loading ? (
-            <ProductGridSkeleton />
+        <>
+          {renderHeader()}
+          {renderLoadingState()}
+        </>
           ) : (
             <FlatList
               data={products}
               renderItem={renderProductItem}
-              keyExtractor={(item) => item.id || Math.random().toString()}
+          keyExtractor={(item, index) => item.id || `${item.name}-${index}`}
               numColumns={2}
               columnWrapperStyle={{
                 justifyContent: 'space-between',
-              }}
-              scrollEnabled={false}
+            paddingHorizontal: spacing.screenPadding,
+          }}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={renderEmptyState}
+          contentContainerStyle={{ paddingBottom: spacing.sectionSpacing * 5 }}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
               showsVerticalScrollIndicator={false}
             />
           )}
-        </View>
-      </ScrollView>
     </SafeAreaView>
   );
 }

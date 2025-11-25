@@ -8,11 +8,13 @@ import {
   StatusBar,
   ActivityIndicator,
   RefreshControl,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { useToast } from '../contexts/ToastContext';
+import { layout, spacing, surfaces, colors } from '@/styles/theme';
 
 interface Notification {
   id: string;
@@ -26,6 +28,9 @@ const NotificationScreen = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const { showToast } = useToast();
 
   const loadNotifications = async () => {
     try {
@@ -75,25 +80,22 @@ const NotificationScreen = () => {
   };
 
   const handleClearAll = () => {
-    Alert.alert(
-      'Clear All Notifications',
-      'Are you sure you want to clear all notifications?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear All',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setNotifications([]);
-              await AsyncStorage.removeItem('notify');
-            } catch (error) {
-              console.error('Error clearing notifications:', error);
-            }
-          },
-        },
-      ]
-    );
+    setShowClearModal(true);
+  };
+
+  const confirmClearAll = async () => {
+    try {
+      setClearing(true);
+      setNotifications([]);
+      await AsyncStorage.removeItem('notify');
+      showToast('All notifications cleared.', 'success');
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+      showToast('Failed to clear notifications.', 'error');
+    } finally {
+      setClearing(false);
+      setShowClearModal(false);
+    }
   };
 
   const formatTime = (timestamp: number) => {
@@ -116,8 +118,8 @@ const NotificationScreen = () => {
 
   const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'cart': return '#007bff';
-      case 'order': return '#28a745';
+      case 'cart': return '#3b82f6';
+      case 'order': return '#10b981';
       default: return '#6c757d';
     }
   };
@@ -130,20 +132,16 @@ const NotificationScreen = () => {
 
   const renderNotificationItem = ({ item }: { item: Notification }) => (
     <View
-      style={{
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginHorizontal: 20,
-        marginBottom: 12,
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 3,
-      }}
+      style={[
+        surfaces.card,
+        {
+          padding: 16,
+          marginHorizontal: spacing.screenPadding,
+          marginBottom: 12,
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+        },
+      ]}
     >
       {/* Notification Icon */}
       <View
@@ -200,7 +198,7 @@ const NotificationScreen = () => {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+    <SafeAreaView style={layout.screenContainer}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
       
       {/* Header */}
@@ -209,9 +207,8 @@ const NotificationScreen = () => {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          paddingHorizontal: 20,
+          paddingHorizontal: spacing.screenPadding,
           paddingVertical: 16,
-          backgroundColor: '#f8f9fa',
         }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -225,11 +222,8 @@ const NotificationScreen = () => {
               justifyContent: 'center',
               alignItems: 'center',
               marginRight: 12,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-              elevation: 2,
+              borderWidth: 1,
+              borderColor: colors.border,
             }}
           >
             <Ionicons name="chevron-back" size={24} color="#000" />
@@ -249,7 +243,7 @@ const NotificationScreen = () => {
           <TouchableOpacity
             onPress={handleClearAll}
             style={{
-              backgroundColor: '#ff4444',
+              backgroundColor: '#ef4444',
               borderRadius: 8,
               paddingHorizontal: 12,
               paddingVertical: 6,
@@ -308,13 +302,26 @@ const NotificationScreen = () => {
           data={notifications}
           renderItem={renderNotificationItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingTop: 10, paddingBottom: 100 }}
+          contentContainerStyle={{
+            paddingTop: 10,
+            paddingBottom: spacing.sectionSpacing * 4,
+          }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         />
       )}
+      <ConfirmationModal
+        visible={showClearModal}
+        title="Clear All Notifications"
+        message="This will remove every notification from your inbox."
+        confirmText="Clear All"
+        cancelText="Cancel"
+        loading={clearing}
+        onCancel={() => setShowClearModal(false)}
+        onConfirm={confirmClearAll}
+      />
     </SafeAreaView>
   );
 };
