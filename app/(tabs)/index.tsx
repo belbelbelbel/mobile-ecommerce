@@ -338,23 +338,30 @@ export default function HomePage() {
           </Text>
         </View>
 
-        <View
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/profile')}
           style={{
             width: 50,
             height: 50,
             borderRadius: 25,
-            backgroundColor: '#e5e7eb',
+            backgroundColor: userProfile?.photoURL || user?.photoURL ? 'transparent' : '#000',
             justifyContent: 'center',
             alignItems: 'center',
             overflow: 'hidden',
+            borderWidth: userProfile?.photoURL || user?.photoURL ? 2 : 0,
+            borderColor: '#000',
           }}
         >
-          <Image
-            source={require('../../assets/images/icon.png')}
-            style={{ width: 50, height: 50, borderRadius: 25 }}
-            resizeMode="cover"
-          />
-        </View>
+          {userProfile?.photoURL || user?.photoURL ? (
+            <Image
+              source={{ uri: userProfile?.photoURL || user?.photoURL || '' }}
+              style={{ width: 50, height: 50, borderRadius: 25 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <Ionicons name="bag" size={24} color="#fff" />
+          )}
+        </TouchableOpacity>
       </View>
 
           <View

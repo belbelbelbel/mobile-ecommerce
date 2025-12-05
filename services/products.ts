@@ -44,7 +44,8 @@ export const getAllProducts = async (): Promise<Product[]> => {
     } as Product));
   } catch (error: any) {
     console.error('Error fetching products:', error);
-    throw new Error('Failed to fetch products');
+    // Preserve the underlying Firestore error message so the UI can show it
+    throw new Error(error?.message || 'Failed to fetch products');
   }
 };
 
@@ -66,7 +67,7 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
     } as Product));
   } catch (error: any) {
     console.error('Error fetching products by category:', error);
-    throw new Error('Failed to fetch products by category');
+    throw new Error(error?.message || 'Failed to fetch products by category');
   }
 };
 
@@ -87,7 +88,7 @@ export const getProductById = async (productId: string): Promise<Product | null>
     return null;
   } catch (error: any) {
     console.error('Error fetching product:', error);
-    throw new Error('Failed to fetch product');
+    throw new Error(error?.message || 'Failed to fetch product');
   }
 };
 
@@ -106,7 +107,7 @@ export const searchProducts = async (searchTerm: string): Promise<Product[]> => 
     );
   } catch (error: any) {
     console.error('Error searching products:', error);
-    throw new Error('Failed to search products');
+    throw new Error(error?.message || 'Failed to search products');
   }
 };
 
@@ -130,7 +131,7 @@ export const getFeaturedProducts = async (limitCount: number = 10): Promise<Prod
     } as Product));
   } catch (error: any) {
     console.error('Error fetching featured products:', error);
-    throw new Error('Failed to fetch featured products');
+    throw new Error(error?.message || 'Failed to fetch featured products');
   }
 };
 
@@ -147,7 +148,8 @@ export const addProduct = async (productData: Omit<Product, 'id' | 'createdAt' |
     return docRef.id;
   } catch (error: any) {
     console.error('Error adding product:', error);
-    throw new Error('Failed to add product');
+    // Bubble up the actual Firestore error message so the UI can display details
+    throw new Error(error?.message || 'Failed to add product');
   }
 };
 
@@ -161,7 +163,7 @@ export const updateProduct = async (productId: string, updates: Partial<Product>
     });
   } catch (error: any) {
     console.error('Error updating product:', error);
-    throw new Error('Failed to update product');
+    throw new Error(error?.message || 'Failed to update product');
   }
 };
 
@@ -172,7 +174,7 @@ export const deleteProduct = async (productId: string): Promise<void> => {
     await deleteDoc(docRef);
   } catch (error: any) {
     console.error('Error deleting product:', error);
-    throw new Error('Failed to delete product');
+    throw new Error(error?.message || 'Failed to delete product');
   }
 };
 

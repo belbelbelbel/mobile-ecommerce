@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,13 @@ export default function ProfilePage() {
   const router = useRouter();
   const { showToast } = useToast();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Redirect to signin if not authenticated (using useEffect to avoid render-time navigation)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/signin');
+    }
+  }, [authLoading, user, router]);
 
   const handleLogout = async () => {
     setShowLogoutModal(true);
@@ -66,6 +73,9 @@ export default function ProfilePage() {
       case 'Settings':
         showToast('Settings will be available soon.', 'info');
         break;
+      case 'Admin Panel':
+        router.push('/admin');
+        break;
       case 'Logout':
         handleLogout();
         break;
@@ -82,6 +92,7 @@ export default function ProfilePage() {
     { icon: 'notifications-outline', title: 'Notifications', color: '#666' },
     { icon: 'help-circle-outline', title: 'Help & Support', color: '#666' },
     { icon: 'settings-outline', title: 'Settings', color: '#666' },
+    { icon: 'cube-outline', title: 'Admin Panel', color: '#1976d2' },
     { icon: 'log-out-outline', title: 'Logout', color: '#ef4444' },
   ];
 
@@ -95,9 +106,8 @@ export default function ProfilePage() {
     );
   }
 
-  // Redirect to signin if not authenticated
+  // Show nothing while redirecting (redirect is handled in useEffect)
   if (!user) {
-    router.replace('/signin');
     return null;
   }
 
@@ -326,7 +336,7 @@ export default function ProfilePage() {
             Settings & Support
           </Text>
           
-          {profileOptions.slice(4, 7).map((option, index) => (
+          {profileOptions.slice(4, 8).map((option, index) => (
             <TouchableOpacity
               key={index}
               style={{
@@ -334,7 +344,7 @@ export default function ProfilePage() {
                 alignItems: 'center',
                 paddingHorizontal: 20,
                 paddingVertical: 16,
-                borderBottomWidth: index < 2 ? 1 : 0,
+                borderBottomWidth: index < 3 ? 1 : 0,
                 borderBottomColor: '#f0f0f0',
                 opacity: loading ? 0.6 : 1,
               }}
@@ -378,6 +388,7 @@ export default function ProfilePage() {
                   {option.title === 'Notifications' && 'Push notification preferences'}
                   {option.title === 'Help & Support' && 'Get help with your orders'}
                   {option.title === 'Settings' && 'App preferences and privacy'}
+                  {option.title === 'Admin Panel' && 'Manage products and inventory'}
                 </Text>
               </View>
               <Ionicons

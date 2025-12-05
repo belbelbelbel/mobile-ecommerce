@@ -18,9 +18,14 @@ export default function Index() {
   // Prevent splash screen from auto-hiding before fonts are loaded
   useEffect(() => {
     if (!fontsLoaded) {
-      SplashScreen.preventAutoHideAsync();
+      SplashScreen.preventAutoHideAsync().catch(() => {
+        // Ignore errors if splash screen is not available
+      });
     } else {
-      SplashScreen.hideAsync();
+      // Hide splash screen with error handling
+      SplashScreen.hideAsync().catch(() => {
+        // Ignore errors if splash screen is not available
+      });
 
       // ⏳ Navigate to OnboardingScreen after 2.5s
       const timer = setTimeout(() => {

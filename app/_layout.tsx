@@ -23,6 +23,7 @@ export default function RootLayout() {
             <Stack.Screen name="help-support" options={{ headerShown: false }} />
             <Stack.Screen name="signin" options={{ headerShown: false }} />
             <Stack.Screen name="OnboardingScreen" options={{ headerShown: false }} />
+            <Stack.Screen name="admin" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
         </CartProvider>
