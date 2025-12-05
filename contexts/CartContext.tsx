@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Product } from '../services/products';
+import { useAuth } from './AuthContext';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -43,16 +44,18 @@ interface CartProviderProps {
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
-  // Load cart from AsyncStorage on app start
+  // Load cart from AsyncStorage when user changes (per-user carts)
   useEffect(() => {
     loadCart();
-  }, []);
+  }, [user]);
 
   const loadCart = async () => {
     try {
       setLoading(true);
-      const cartData = await AsyncStorage.getItem('cart');
+      const storageKey = user?.uid ? `cart_${user.uid}` : 'cart_guest';
+      const cartData = await AsyncStorage.getItem(storageKey);
       if (cartData) {
         const parsedCart = JSON.parse(cartData);
         setCartItems(parsedCart);
@@ -66,7 +69,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const saveCart = async (items: CartItem[]) => {
     try {
-      await AsyncStorage.setItem('cart', JSON.stringify(items));
+      const storageKey = user?.uid ? `cart_${user.uid}` : 'cart_guest';
+      await AsyncStorage.setItem(storageKey, JSON.stringify(items));
     } catch (error) {
       console.error('Error saving cart:', error);
     }
@@ -74,7 +78,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const addNotification = async (message: string) => {
     try {
-      const existingNotifications = await AsyncStorage.getItem('notify');
+      const storageKey = user?.uid ? `notify_${user.uid}` : 'notify_guest';
+      const existingNotifications = await AsyncStorage.getItem(storageKey);
       let notificationsArray: string[] = [];
       
       if (existingNotifications) {
@@ -89,7 +94,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       }
       
       notificationsArray.push(message);
-      await AsyncStorage.setItem('notify', JSON.stringify(notificationsArray));
+      await AsyncStorage.setItem(storageKey, JSON.stringify(notificationsArray));
     } catch (error) {
       console.error('Error saving notification:', error);
     }
@@ -174,7 +179,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       setCartItems([]);
-      await AsyncStorage.removeItem('cart');
+      const storageKey = user?.uid ? `cart_${user.uid}` : 'cart_guest';
+      await AsyncStorage.removeItem(storageKey);
       await addNotification('Cart cleared.');
     } catch (error) {
       console.error('Error clearing cart:', error);

@@ -7,7 +7,8 @@ import React, {
   useState,
   type ReactNode,
 } from 'react';
-import { Animated, Easing, StyleSheet, Text } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 type ToastType = 'info' | 'success' | 'error';
 
@@ -72,7 +73,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
   }, [opacity, translateY]);
 
   const showToast = useCallback(
-    (message: string, type: ToastType = 'info', durationMs = 2500) => {
+    (message: string, type: ToastType = 'info', durationMs = 1800) => {
       clearTimer();
       setToast({ visible: true, message, type });
 
@@ -111,7 +112,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
       {children}
       {toast.visible && (
         <Animated.View
-          pointerEvents="none"
+          pointerEvents="auto"
           style={[
             styles.toastContainer,
             {
@@ -121,7 +122,27 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
             },
           ]}
         >
-          <Text style={styles.toastText}>{toast.message}</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+            }}
+          >
+            <Text
+              style={[styles.toastText, { flex: 1, paddingRight: 8 }]}
+              numberOfLines={3}
+            >
+              {toast.message}
+            </Text>
+            <TouchableOpacity
+              onPress={hideToast}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="close" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
         </Animated.View>
       )}
     </ToastContext.Provider>
@@ -142,7 +163,7 @@ const styles = StyleSheet.create({
     bottom: 40,
     left: 20,
     right: 20,
-    borderRadius: 999,
+    borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 20,
     shadowColor: '#000',
@@ -154,7 +175,7 @@ const styles = StyleSheet.create({
   },
   toastText: {
     color: '#fff',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
   },

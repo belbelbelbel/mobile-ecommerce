@@ -1,10 +1,13 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { colors } from '@/styles/theme';
+import { useCart } from '../../contexts/CartContext';
 
 export default function TabLayout() {
+  const { cartCount } = useCart();
+
   return (
     <Tabs
       screenOptions={{
@@ -53,28 +56,35 @@ export default function TabLayout() {
                 size={24} 
                 color={focused ? '#fff' : '#666'} 
               />
-              <View 
-                style={{
-                  position: 'absolute',
-                  top: -5,
-                  right: -8,
-                  backgroundColor: '#ef4444',
-                  borderRadius: 8,
-                  width: 16,
-                  height: 16,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
+              {cartCount > 0 && (
                 <View 
                   style={{
-                    width: 8,
-                    height: 8,
+                    position: 'absolute',
+                    top: -6,
+                    right: -10,
                     backgroundColor: '#ef4444',
-                    borderRadius: 4,
+                    borderRadius: 999,
+                    minWidth: 18,
+                    height: 18,
+                    paddingHorizontal: 4,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: '#000',
                   }}
-                />
-              </View>
+                >
+                  <Text
+                    style={{
+                      color: '#fff',
+                      fontSize: 10,
+                      fontWeight: '700',
+                    }}
+                    numberOfLines={1}
+                  >
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </Text>
+                </View>
+              )}
             </View>
           ),
         }}

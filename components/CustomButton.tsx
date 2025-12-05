@@ -16,6 +16,7 @@ import Animated, {
 
 import { OnboardingData } from './data';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 type Props = {
   dataLength: number;
@@ -95,10 +96,18 @@ const CustomButton = ({flatListRef, flatListIndex, dataLength, x}: Props) => {
         <Animated.Text style={[styles.textButton, textAnimationStyle]} onPress={() =>  routes.push('/(tabs)')}>
           Get Started
         </Animated.Text>
-        <Animated.Image
+        {/* <Animated.Image
           source={require('../assets/images/ArrowIcon.png')}
           style={[styles.arrow, arrowAnimationStyle]}
-        />
+        /> */}
+      {
+        flatListIndex.value === dataLength - 1 ? (
+          <Ionicons name='arrow-forward' size={27} color="transparent" />
+          // <Animated.Text style={[styles.textButton, textAnimationStyle]} onPress={() =>  routes.push('/(tabs)')}>Get Started</Animated.Text>
+        ) : (
+          <Ionicons name='arrow-forward' size={27} color="white" />
+        )
+      }
       </Animated.View>
     </TouchableWithoutFeedback>
   );

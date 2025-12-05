@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useCart } from '../contexts/CartContext';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import { colors, layout, spacing, surfaces } from '@/styles/theme';
 
 const paymentMethods = [
@@ -25,6 +26,7 @@ const CheckoutScreen = () => {
   const router = useRouter();
   const { cartItems, totalPrice, clearCart } = useCart();
   const { showToast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [selectedPayment, setSelectedPayment] = useState(paymentMethods[0].id);
   const [processing, setProcessing] = useState(false);
 
@@ -32,6 +34,12 @@ const CheckoutScreen = () => {
   const orderTotal = useMemo(() => totalPrice + shippingCost, [totalPrice, shippingCost]);
 
   const handlePlaceOrder = async () => {
+    if (!isAuthenticated) {
+      showToast('Please sign in to place your order.', 'info');
+      router.push('/signin');
+      return;
+    }
+
     if (cartItems.length === 0) {
       showToast('Add items to your cart before checking out.', 'info');
       router.back();

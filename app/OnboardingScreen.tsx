@@ -71,6 +71,7 @@ export default OnboardingScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f8f9fa',
   },
   bottomContainer: {
     flexDirection: 'row',

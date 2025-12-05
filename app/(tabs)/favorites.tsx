@@ -15,6 +15,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { getAllProducts, Product } from '../../services/products';
 import { useCart } from '../../contexts/CartContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../contexts/AuthContext';
 import { ProductGridSkeleton } from '../../components/SkeletonLoader';
 import { layout, spacing, surfaces } from '@/styles/theme';
 
@@ -30,11 +31,13 @@ export default function FavoritesPage() {
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const router = useRouter();
   const { addToCart } = useCart();
+  const { user } = useAuth();
 
   // Load favorites from AsyncStorage
   const loadFavorites = async () => {
     try {
-      const favoritesData = await AsyncStorage.getItem('favorites');
+      const storageKey = user?.uid ? `favorites_${user.uid}` : 'favorites_guest';
+      const favoritesData = await AsyncStorage.getItem(storageKey);
       if (favoritesData) {
         const favoritesArray = JSON.parse(favoritesData);
         setFavorites(new Set(favoritesArray));
@@ -77,7 +80,8 @@ export default function FavoritesPage() {
       newFavorites.delete(productId);
       setFavorites(newFavorites);
       
-      await AsyncStorage.setItem('favorites', JSON.stringify(Array.from(newFavorites)));
+      const storageKey = user?.uid ? `favorites_${user.uid}` : 'favorites_guest';
+      await AsyncStorage.setItem(storageKey, JSON.stringify(Array.from(newFavorites)));
       
       setFavoriteProducts(prev => prev.filter(product => product.id !== productId));
     } catch (error) {

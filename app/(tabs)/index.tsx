@@ -43,7 +43,7 @@ export default function HomePage() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const { user, userProfile } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart, cartCount } = useCart();
   const [addingToCart, setAddingToCart] = useState<string | null>(null);
   const { showToast } = useToast();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -51,7 +51,8 @@ export default function HomePage() {
 
   const loadFavorites = async (): Promise<Set<string>> => {
     try {
-      const favoritesData = await AsyncStorage.getItem('favorites');
+      const storageKey = user?.uid ? `favorites_${user.uid}` : 'favorites_guest';
+      const favoritesData = await AsyncStorage.getItem(storageKey);
       if (favoritesData) {
         const favoritesArray: string[] = JSON.parse(favoritesData);
         return new Set(favoritesArray);
@@ -154,7 +155,8 @@ export default function HomePage() {
         newFavorites.add(productId);
       }
       setFavorites(newFavorites);
-      await AsyncStorage.setItem('favorites', JSON.stringify(Array.from(newFavorites)));
+      const storageKey = user?.uid ? `favorites_${user.uid}` : 'favorites_guest';
+      await AsyncStorage.setItem(storageKey, JSON.stringify(Array.from(newFavorites)));
     } catch (error) {
       console.error('Error toggling favorite:', error);
       showToast('Unable to update favorites. Please try again.', 'error');
@@ -338,30 +340,79 @@ export default function HomePage() {
           </Text>
         </View>
 
-        <TouchableOpacity
-          onPress={() => router.push('/(tabs)/profile')}
-          style={{
-            width: 50,
-            height: 50,
-            borderRadius: 25,
-            backgroundColor: userProfile?.photoURL || user?.photoURL ? 'transparent' : '#000',
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden',
-            borderWidth: userProfile?.photoURL || user?.photoURL ? 2 : 0,
-            borderColor: '#000',
-          }}
-        >
-          {userProfile?.photoURL || user?.photoURL ? (
-            <Image
-              source={{ uri: userProfile?.photoURL || user?.photoURL || '' }}
-              style={{ width: 50, height: 50, borderRadius: 25 }}
-              resizeMode="cover"
-            />
-          ) : (
-            <Ionicons name="bag" size={24} color="#fff" />
-          )}
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {/* Cart icon with badge */}
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/cart')}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: '#111',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginRight: 12,
+              position: 'relative',
+            }}
+          >
+            <Ionicons name="bag-outline" size={22} color="#fff" />
+            {cartCount > 0 && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -4,
+                  right: -4,
+                  backgroundColor: '#ef4444',
+                  borderRadius: 999,
+                  minWidth: 18,
+                  height: 18,
+                  paddingHorizontal: 4,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 1,
+                  borderColor: '#fff',
+                }}
+              >
+                <Text
+                  style={{
+                    color: '#fff',
+                    fontSize: 10,
+                    fontWeight: '700',
+                  }}
+                  numberOfLines={1}
+                >
+                  {cartCount > 99 ? '99+' : cartCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          {/* Profile avatar */}
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/profile')}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: userProfile?.photoURL || user?.photoURL ? 'transparent' : '#000',
+              justifyContent: 'center',
+              alignItems: 'center',
+              overflow: 'hidden',
+              borderWidth: userProfile?.photoURL || user?.photoURL ? 2 : 0,
+              borderColor: '#000',
+            }}
+          >
+            {userProfile?.photoURL || user?.photoURL ? (
+              <Image
+                source={{ uri: userProfile?.photoURL || user?.photoURL || '' }}
+                style={{ width: 44, height: 44, borderRadius: 22 }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Ionicons name="person-outline" size={22} color="#fff" />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
           <View

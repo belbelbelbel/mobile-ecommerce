@@ -15,6 +15,7 @@ import { useCart, CartItem } from '../../contexts/CartContext';
 import { CartItemSkeleton } from '../../components/SkeletonLoader';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useToast } from '../../contexts/ToastContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { colors, layout, spacing, surfaces } from '@/styles/theme';
 
 export default function CartPage() {
@@ -22,6 +23,7 @@ export default function CartPage() {
   const { cartItems, cartCount, totalPrice, removeFromCart, updateQuantity, clearCart, loading } =
     useCart();
   const { showToast } = useToast();
+  const { isAuthenticated } = useAuth();
   const [confirmationState, setConfirmationState] = useState<{
     visible: boolean;
     type: 'remove' | 'clear';
@@ -49,6 +51,11 @@ export default function CartPage() {
   const handleCheckout = () => {
     if (cartItems.length === 0) {
       showToast('Add items to your cart before checking out.', 'info');
+      return;
+    }
+    if (!isAuthenticated) {
+      showToast('Please sign in to checkout.', 'info');
+      router.push('/signin');
       return;
     }
     router.push('/checkout');
@@ -279,7 +286,7 @@ export default function CartPage() {
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: spacing.sectionSpacing * 3 }}
+        contentContainerStyle={{ paddingBottom: spacing.sectionSpacing * 7 }}
         showsVerticalScrollIndicator={false}
       >
         {loading ? (
@@ -356,7 +363,7 @@ export default function CartPage() {
             borderTopRightRadius: 20,
             paddingHorizontal: spacing.screenPadding,
             paddingTop: 20,
-            paddingBottom: 100,
+            paddingBottom: 40,
             borderTopWidth: 1,
             borderColor: colors.border,
           }}
