@@ -19,14 +19,14 @@ const data: OnboardingData[] = [
   {
     id: 2,
     animation: require('../assets/animations/Lottie2.json'),
-    text: 'Explore a wide range of products and brands.',
+    text: 'Shop with confidence and enjoy a seamless shopping experience.',
     textColor: '#111827',
     backgroundColor: '#fef3c7', // warm amber accent
   },
   {
     id: 3,
     animation: require('../assets/animations/Lottie3.json'),
-    text: 'Shop with confidence and enjoy a seamless shopping experience.',
+    text: 'Track orders, manage your cart, and shop securely in one place.',
     textColor: '#111827',
     backgroundColor: '#dbeafe', // soft blue accent
   },

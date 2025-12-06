@@ -102,7 +102,6 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const addToCart = async (product: Product, quantity: number = 1) => {
     try {
-      setLoading(true);
       const existingItemIndex = cartItems.findIndex(item => item.id === product.id);
       let updatedCart: CartItem[];
 
@@ -128,14 +127,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       await saveCart(updatedCart);
     } catch (error) {
       console.error('Error adding to cart:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const removeFromCart = async (productId: string) => {
     try {
-      setLoading(true);
       const itemToRemove = cartItems.find(item => item.id === productId);
       const updatedCart = cartItems.filter(item => item.id !== productId);
       
@@ -147,14 +143,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       }
     } catch (error) {
       console.error('Error removing from cart:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const updateQuantity = async (productId: string, quantity: number) => {
     try {
-      setLoading(true);
       if (quantity <= 0) {
         await removeFromCart(productId);
         return;
@@ -170,22 +163,17 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       await saveCart(updatedCart);
     } catch (error) {
       console.error('Error updating quantity:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const clearCart = async () => {
     try {
-      setLoading(true);
       setCartItems([]);
       const storageKey = user?.uid ? `cart_${user.uid}` : 'cart_guest';
       await AsyncStorage.removeItem(storageKey);
       await addNotification('Cart cleared.');
     } catch (error) {
       console.error('Error clearing cart:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

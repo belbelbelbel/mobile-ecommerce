@@ -334,7 +334,7 @@ export default function HomePage() {
         }}
       >
         <View>
-          <Text style={{ fontSize: 16, color: '#6b7280', marginBottom: 4 }}>Hello, Welcome 👋</Text>
+          <Text style={{ fontSize: 16, color: '#6b7280', marginBottom: 4 }}>Hello, Welcome </Text>
           <Text style={{ fontSize: 20, fontWeight: '700', color: '#111' }}>
             {userProfile?.displayName || user?.displayName || 'Guest'}
           </Text>

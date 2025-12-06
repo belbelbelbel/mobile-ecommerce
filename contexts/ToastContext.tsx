@@ -42,7 +42,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     type: 'info',
   });
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(20)).current;
+  const translateY = useRef(new Animated.Value(-20)).current;
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const clearTimer = () => {
@@ -62,7 +62,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         useNativeDriver: true,
       }),
       Animated.timing(translateY, {
-        toValue: 20,
+        toValue: -20,
         duration: 180,
         easing: Easing.out(Easing.ease),
         useNativeDriver: true,
@@ -160,7 +160,7 @@ export const useToast = (): ToastContextValue => {
 const styles = StyleSheet.create({
   toastContainer: {
     position: 'absolute',
-    bottom: 40,
+    top: 50,
     left: 20,
     right: 20,
     borderRadius: 14,

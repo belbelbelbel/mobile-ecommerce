@@ -1,5 +1,5 @@
 import {StyleSheet, View, FlatList, ViewToken} from 'react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import Animated, {
   useSharedValue,
   useAnimatedScrollHandler,
@@ -15,6 +15,7 @@ const OnboardingScreen = () => {
   const flatListRef = useAnimatedRef<FlatList<OnboardingData>>();
   const x = useSharedValue(0);
   const flatListIndex = useSharedValue(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const onViewableItemsChanged = ({
     viewableItems,
@@ -23,6 +24,7 @@ const OnboardingScreen = () => {
   }) => {
     if (viewableItems[0].index !== null) {
       flatListIndex.value = viewableItems[0].index;
+      setCurrentIndex(viewableItems[0].index);
     }
   };
 
@@ -60,6 +62,7 @@ const OnboardingScreen = () => {
           flatListIndex={flatListIndex}
           dataLength={data.length}
           x={x}
+          isLast={currentIndex === data.length - 1}
         />
       </View>
     </View>

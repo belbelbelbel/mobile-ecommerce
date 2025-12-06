@@ -70,7 +70,7 @@ const RenderItem = ({index, x, item}: Props) => {
         <LottieView
           source={item.animation}
           style={{
-            width: SCREEN_WIDTH * 0.9,
+            width: SCREEN_WIDTH * 1.3,
             height: SCREEN_WIDTH * 0.9,
           }}
           autoPlay
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   },
   itemText: {
     textAlign: 'center',
-    fontSize: 30,
+    fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
     marginHorizontal: 20,

@@ -23,7 +23,6 @@ export default function CartPage() {
   const { cartItems, cartCount, totalPrice, removeFromCart, updateQuantity, clearCart, loading } =
     useCart();
   const { showToast } = useToast();
-  const { isAuthenticated } = useAuth();
   const [confirmationState, setConfirmationState] = useState<{
     visible: boolean;
     type: 'remove' | 'clear';
@@ -51,11 +50,6 @@ export default function CartPage() {
   const handleCheckout = () => {
     if (cartItems.length === 0) {
       showToast('Add items to your cart before checking out.', 'info');
-      return;
-    }
-    if (!isAuthenticated) {
-      showToast('Please sign in to checkout.', 'info');
-      router.push('/signin');
       return;
     }
     router.push('/checkout');
@@ -350,79 +344,78 @@ export default function CartPage() {
         )}
       </ScrollView>
 
-      {/* Bottom Summary */}
-      {cartItems.length > 0 && (
+      {/* Bottom Summary - always visible so checkout button is clear */}
+      <View
+        style={{
+          position: 'absolute',
+          // Lift the checkout bar above the bottom tab bar so it doesn't hide
+          bottom: 90,
+          left: 0,
+          right: 0,
+          backgroundColor: '#fff',
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          paddingHorizontal: spacing.screenPadding,
+          paddingTop: 20,
+          paddingBottom: 40,
+          borderTopWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
         <View
           style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: '#fff',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            paddingHorizontal: spacing.screenPadding,
-            paddingTop: 20,
-            paddingBottom: 40,
-            borderTopWidth: 1,
-            borderColor: colors.border,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 16,
           }}
         >
-          <View
+          <Text
             style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 16,
+              fontSize: 18,
+              fontWeight: 'bold',
+              color: '#000',
             }}
           >
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: 'bold',
-                color: '#000',
-              }}
-            >
-              Total ({cartCount} {cartCount === 1 ? 'item' : 'items'})
-            </Text>
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: 'bold',
-                color: '#000',
-              }}
-            >
-              ${totalPrice.toFixed(2)}
-            </Text>
-          </View>
-
-          <TouchableOpacity
+            Total ({cartCount} {cartCount === 1 ? 'item' : 'items'})
+          </Text>
+          <Text
             style={{
-              backgroundColor: '#000',
-              borderRadius: 16,
-              paddingVertical: 16,
-              alignItems: 'center',
-              opacity: loading ? 0.6 : 1,
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#000',
             }}
-            onPress={handleCheckout}
-            disabled={loading}
           >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text
-                style={{
-                  color: '#fff',
-                  fontSize: 16,
-                  fontWeight: '600',
-                }}
-              >
-                Proceed to Checkout
-              </Text>
-            )}
-          </TouchableOpacity>
+            ${totalPrice.toFixed(2)}
+          </Text>
         </View>
-      )}
+
+        <TouchableOpacity
+          style={{
+            backgroundColor: cartItems.length === 0 ? '#9ca3af' : '#000',
+            borderRadius: 16,
+            paddingVertical: 16,
+            alignItems: 'center',
+            opacity: loading ? 0.6 : 1,
+          }}
+          onPress={handleCheckout}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text
+              style={{
+                color: '#fff',
+                fontSize: 16,
+                fontWeight: '600',
+              }}
+            >
+              Proceed to Checkout
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
 
       <ConfirmationModal
         visible={confirmationState.visible}
